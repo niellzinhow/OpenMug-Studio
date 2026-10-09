@@ -1,0 +1,4 @@
+# Arquivos de configuração e arquivos temporários locais
+config.json
+temp/
+__pycache__/

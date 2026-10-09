@@ -28,9 +28,9 @@ class App(ctk.CTk):
         
         # Armazena os dados das 3 imagens
         self.images_data = [
-            {"path": "", "mode": "Redimensionar", "label_ref": None, "thumb_ref": None, "actions_frame_ref": None},
-            {"path": "", "mode": "Redimensionar", "label_ref": None, "thumb_ref": None, "actions_frame_ref": None},
-            {"path": "", "mode": "Redimensionar", "label_ref": None, "thumb_ref": None, "actions_frame_ref": None}
+            {"path": "", "mode": "Redimensionar", "label_ref": None, "thumb_ref": None, "actions_frame_ref": None, "combo_mode_ref": None},
+            {"path": "", "mode": "Redimensionar", "label_ref": None, "thumb_ref": None, "actions_frame_ref": None, "combo_mode_ref": None},
+            {"path": "", "mode": "Redimensionar", "label_ref": None, "thumb_ref": None, "actions_frame_ref": None, "combo_mode_ref": None}
         ]
         
         # Resoluções Fixas (300 DPI)
@@ -165,6 +165,7 @@ class App(ctk.CTk):
             self.images_data[i]["label_ref"] = lbl_path
             self.images_data[i]["thumb_ref"] = lbl_thumb
             self.images_data[i]["actions_frame_ref"] = actions_frame
+            self.images_data[i]["combo_mode_ref"] = combo_mode
 
         # --- SEÇÃO DE AÇÃO E PRÉVIA (Base) ---
         self.bottom_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -205,6 +206,11 @@ class App(ctk.CTk):
             self.images_data[index]["path"] = filepath
             filename = os.path.basename(filepath)
             self.images_data[index]["label_ref"].configure(text=filename)
+            
+            # Força o reset para "Redimensionar" ao escolher/substituir a imagem
+            self.images_data[index]["mode"] = "Redimensionar"
+            if self.images_data[index]["combo_mode_ref"]:
+                self.images_data[index]["combo_mode_ref"].set("Redimensionar")
 
             # Gera a miniatura (Thumbnail)
             try:
@@ -228,6 +234,12 @@ class App(ctk.CTk):
         self.images_data[index]["label_ref"].configure(text="Nenhuma imagem selecionada")
         self.images_data[index]["thumb_ref"].configure(image="", text="Sem Imagem")
         self.images_data[index]["actions_frame_ref"].pack_forget()
+        
+        # Reseta o modo para "Redimensionar" ao limpar
+        self.images_data[index]["mode"] = "Redimensionar"
+        if self.images_data[index]["combo_mode_ref"]:
+            self.images_data[index]["combo_mode_ref"].set("Redimensionar")
+            
         self.update_clear_all_state()
 
     def duplicate_image(self, index):
@@ -251,6 +263,12 @@ class App(ctk.CTk):
         target_path = current_data["path"]
         self.images_data[target_index]["path"] = target_path
         self.images_data[target_index]["label_ref"].configure(text=os.path.basename(target_path))
+        
+        # Duplica também o modo de encaixe
+        target_mode = current_data["mode"]
+        self.images_data[target_index]["mode"] = target_mode
+        if self.images_data[target_index]["combo_mode_ref"]:
+            self.images_data[target_index]["combo_mode_ref"].set(target_mode)
 
         try:
             with Image.open(target_path) as img:
