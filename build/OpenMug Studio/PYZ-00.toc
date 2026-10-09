@@ -457,6 +457,18 @@
    'C:\\Program Files\\Python314\\Lib\\contextvars.py',
    'PYMODULE'),
   ('copy', 'C:\\Program Files\\Python314\\Lib\\copy.py', 'PYMODULE'),
+  ('core',
+   'C:\\Users\\danie\\OneDrive\\Documentos\\GitHub\\OpenMug '
+   'Studio\\core\\__init__.py',
+   'PYMODULE'),
+  ('core.config_manager',
+   'C:\\Users\\danie\\OneDrive\\Documentos\\GitHub\\OpenMug '
+   'Studio\\core\\config_manager.py',
+   'PYMODULE'),
+  ('core.image_processor',
+   'C:\\Users\\danie\\OneDrive\\Documentos\\GitHub\\OpenMug '
+   'Studio\\core\\image_processor.py',
+   'PYMODULE'),
   ('csv', 'C:\\Program Files\\Python314\\Lib\\csv.py', 'PYMODULE'),
   ('ctypes',
    'C:\\Program Files\\Python314\\Lib\\ctypes\\__init__.py',
@@ -707,6 +719,18 @@
   ('getopt', 'C:\\Program Files\\Python314\\Lib\\getopt.py', 'PYMODULE'),
   ('gettext', 'C:\\Program Files\\Python314\\Lib\\gettext.py', 'PYMODULE'),
   ('glob', 'C:\\Program Files\\Python314\\Lib\\glob.py', 'PYMODULE'),
+  ('gui',
+   'C:\\Users\\danie\\OneDrive\\Documentos\\GitHub\\OpenMug '
+   'Studio\\gui\\__init__.py',
+   'PYMODULE'),
+  ('gui.app',
+   'C:\\Users\\danie\\OneDrive\\Documentos\\GitHub\\OpenMug '
+   'Studio\\gui\\app.py',
+   'PYMODULE'),
+  ('gui.preview_window',
+   'C:\\Users\\danie\\OneDrive\\Documentos\\GitHub\\OpenMug '
+   'Studio\\gui\\preview_window.py',
+   'PYMODULE'),
   ('gzip', 'C:\\Program Files\\Python314\\Lib\\gzip.py', 'PYMODULE'),
   ('hashlib', 'C:\\Program Files\\Python314\\Lib\\hashlib.py', 'PYMODULE'),
   ('hmac', 'C:\\Program Files\\Python314\\Lib\\hmac.py', 'PYMODULE'),

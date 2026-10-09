@@ -1,4 +1,5 @@
 import os
+import sys
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from PIL import Image
@@ -7,13 +8,20 @@ from core.config_manager import ConfigManager
 from core.image_processor import ImageProcessor
 from gui.preview_window import PreviewWindow
 
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
         self.title("OpenMug Studio")
         try:
-            self.iconbitmap("OpenMug Studio.ico")
+            self.iconbitmap(resource_path("OpenMug Studio.ico"))
         except:
             pass
         self.geometry("850x700")
@@ -42,7 +50,7 @@ class App(ctk.CTk):
         # --- TÍTULO DO APP ---
         img_icon = None
         try:
-            icon_img = Image.open("OpenMug Studio.ico")
+            icon_img = Image.open(resource_path("OpenMug Studio.ico"))
             img_icon = ctk.CTkImage(light_image=icon_img, dark_image=icon_img, size=(32, 32))
         except Exception:
             pass
