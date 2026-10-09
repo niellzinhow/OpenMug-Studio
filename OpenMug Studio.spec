@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['c:/Users/aedco/Desktop/Imprimidor/main.py'],
+    ['main.py'],
     pathex=[],
     binaries=[],
     datas=[],
