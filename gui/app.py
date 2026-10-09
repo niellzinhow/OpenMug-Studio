@@ -68,6 +68,11 @@ class App(ctk.CTk):
         self.lbl_icc = ctk.CTkLabel(self.icc_card, text=icc_display, text_color="#94A3B8", wraplength=500)
         self.lbl_icc.pack(side="left", padx=10, pady=15)
 
+        self.btn_clear_icc = ctk.CTkButton(self.icc_card, text="✖", width=30, height=30, fg_color="transparent", 
+                                           hover_color="#B71C1C", text_color="#94A3B8", command=self.clear_icc)
+        if self.config_manager.icc_profile_path:
+            self.btn_clear_icc.pack(side="right", padx=15, pady=15)
+
         # --- SEÇÃO DE IMAGENS (Meio) ---
         self.images_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.images_frame.pack(pady=5, padx=20, fill="both", expand=True)
@@ -153,6 +158,12 @@ class App(ctk.CTk):
         if filepath:
             self.config_manager.save_config(filepath)
             self.lbl_icc.configure(text=filepath)
+            self.btn_clear_icc.pack(side="right", padx=15, pady=15)
+
+    def clear_icc(self):
+        self.config_manager.save_config("")
+        self.lbl_icc.configure(text="Nenhum perfil selecionado")
+        self.btn_clear_icc.pack_forget()
 
     def select_image(self, index):
         filepath = filedialog.askopenfilename(
@@ -256,9 +267,6 @@ class App(ctk.CTk):
 
     def generate_preview(self):
         # Validações antes de processar
-        if not self.config_manager.icc_profile_path or not os.path.exists(self.config_manager.icc_profile_path):
-            messagebox.showwarning("Aviso", "Por favor, selecione um perfil ICC válido antes de continuar.")
-            return
 
         has_image = any(item["path"] for item in self.images_data)
         if not has_image:
