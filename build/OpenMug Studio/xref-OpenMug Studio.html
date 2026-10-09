@@ -18,18 +18,12 @@
   <a target="code" href="///C:/Users/danie/OneDrive/Documentos/GitHub/OpenMug%20Studio/main.py" type="text/plain"><tt>main.py</tt></a>
 <span class="moduletype">Script</span>  <div class="import">
 imports:
-    <a href="#PIL">PIL</a>
- &#8226;   <a href="#PIL.Image">PIL.Image</a>
- &#8226;   <a href="#PIL.ImageCms">PIL.ImageCms</a>
- &#8226;   <a href="#PIL.ImageOps">PIL.ImageOps</a>
- &#8226;   <a href="#PIL.ImageTk">PIL.ImageTk</a>
- &#8226;   <a href="#_collections_abc">_collections_abc</a>
+    <a href="#_collections_abc">_collections_abc</a>
  &#8226;   <a href="#_weakrefset">_weakrefset</a>
  &#8226;   <a href="#abc">abc</a>
  &#8226;   <a href="#codecs">codecs</a>
  &#8226;   <a href="#collections">collections</a>
  &#8226;   <a href="#copyreg">copyreg</a>
- &#8226;   <a href="#ctypes">ctypes</a>
  &#8226;   <a href="#customtkinter">customtkinter</a>
  &#8226;   <a href="#encodings">encodings</a>
  &#8226;   <a href="#encodings._win_cp_codecs">encodings._win_cp_codecs</a>
@@ -157,9 +151,9 @@ imports:
  &#8226;   <a href="#enum">enum</a>
  &#8226;   <a href="#functools">functools</a>
  &#8226;   <a href="#genericpath">genericpath</a>
+ &#8226;   <a href="#gui.app">gui.app</a>
  &#8226;   <a href="#heapq">heapq</a>
  &#8226;   <a href="#io">io</a>
- &#8226;   <a href="#json">json</a>
  &#8226;   <a href="#keyword">keyword</a>
  &#8226;   <a href="#linecache">linecache</a>
  &#8226;   <a href="#locale">locale</a>
@@ -181,11 +175,6 @@ imports:
  &#8226;   <a href="#sre_constants">sre_constants</a>
  &#8226;   <a href="#sre_parse">sre_parse</a>
  &#8226;   <a href="#stat">stat</a>
- &#8226;   <a href="#subprocess">subprocess</a>
- &#8226;   <a href="#sys">sys</a>
- &#8226;   <a href="#tkinter">tkinter</a>
- &#8226;   <a href="#tkinter.filedialog">tkinter.filedialog</a>
- &#8226;   <a href="#tkinter.messagebox">tkinter.messagebox</a>
  &#8226;   <a href="#traceback">traceback</a>
  &#8226;   <a href="#types">types</a>
  &#8226;   <a href="#warnings">warnings</a>
@@ -509,8 +498,10 @@ imported by:
  &#8226;   <a href="#PIL._version">PIL._version</a>
  &#8226;   <a href="#PIL._webp">PIL._webp</a>
  &#8226;   <a href="#PIL.features">PIL.features</a>
+ &#8226;   <a href="#core.image_processor">core.image_processor</a>
  &#8226;   <a href="#customtkinter.windows.widgets.image.ctk_image">customtkinter.windows.widgets.image.ctk_image</a>
- &#8226;   <a href="#main.py">main.py</a>
+ &#8226;   <a href="#gui.app">gui.app</a>
+ &#8226;   <a href="#gui.preview_window">gui.preview_window</a>
 
   </div>
 
@@ -1193,8 +1184,10 @@ imported by:
  &#8226;   <a href="#PIL.XbmImagePlugin">PIL.XbmImagePlugin</a>
  &#8226;   <a href="#PIL.XpmImagePlugin">PIL.XpmImagePlugin</a>
  &#8226;   <a href="#PIL.features">PIL.features</a>
+ &#8226;   <a href="#core.image_processor">core.image_processor</a>
  &#8226;   <a href="#customtkinter.windows.widgets.image.ctk_image">customtkinter.windows.widgets.image.ctk_image</a>
- &#8226;   <a href="#main.py">main.py</a>
+ &#8226;   <a href="#gui.app">gui.app</a>
+ &#8226;   <a href="#gui.preview_window">gui.preview_window</a>
 
   </div>
 
@@ -1244,7 +1237,7 @@ imports:
 imported by:
     <a href="#PIL">PIL</a>
  &#8226;   <a href="#PIL.Image">PIL.Image</a>
- &#8226;   <a href="#main.py">main.py</a>
+ &#8226;   <a href="#core.image_processor">core.image_processor</a>
 
   </div>
 
@@ -1447,7 +1440,7 @@ imported by:
  &#8226;   <a href="#PIL.CurImagePlugin">PIL.CurImagePlugin</a>
  &#8226;   <a href="#PIL.GifImagePlugin">PIL.GifImagePlugin</a>
  &#8226;   <a href="#PIL.TiffImagePlugin">PIL.TiffImagePlugin</a>
- &#8226;   <a href="#main.py">main.py</a>
+ &#8226;   <a href="#core.image_processor">core.image_processor</a>
 
   </div>
 
@@ -1590,7 +1583,6 @@ imported by:
     <a href="#PIL">PIL</a>
  &#8226;   <a href="#PIL.SpiderImagePlugin">PIL.SpiderImagePlugin</a>
  &#8226;   <a href="#customtkinter.windows.widgets.image.ctk_image">customtkinter.windows.widgets.image.ctk_image</a>
- &#8226;   <a href="#main.py">main.py</a>
 
   </div>
 
@@ -6360,6 +6352,58 @@ imported by:
 </div>
 
 <div class="node">
+  <a name="core"></a>
+  <a target="code" href="///C:/Users/danie/OneDrive/Documentos/GitHub/OpenMug%20Studio/core/__init__.py" type="text/plain"><tt>core</tt></a>
+<span class="moduletype">Package</span>  <div class="import">
+imported by:
+    <a href="#core.config_manager">core.config_manager</a>
+ &#8226;   <a href="#core.image_processor">core.image_processor</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="core.config_manager"></a>
+  <a target="code" href="///C:/Users/danie/OneDrive/Documentos/GitHub/OpenMug%20Studio/core/config_manager.py" type="text/plain"><tt>core.config_manager</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#core">core</a>
+ &#8226;   <a href="#ctypes">ctypes</a>
+ &#8226;   <a href="#json">json</a>
+ &#8226;   <a href="#os">os</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#gui.app">gui.app</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="core.image_processor"></a>
+  <a target="code" href="///C:/Users/danie/OneDrive/Documentos/GitHub/OpenMug%20Studio/core/image_processor.py" type="text/plain"><tt>core.image_processor</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#PIL">PIL</a>
+ &#8226;   <a href="#PIL.Image">PIL.Image</a>
+ &#8226;   <a href="#PIL.ImageCms">PIL.ImageCms</a>
+ &#8226;   <a href="#PIL.ImageOps">PIL.ImageOps</a>
+ &#8226;   <a href="#core">core</a>
+ &#8226;   <a href="#os">os</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#gui.app">gui.app</a>
+
+  </div>
+
+</div>
+
+<div class="node">
   <a name="csv"></a>
   <a target="code" href="///C:/Program%20Files/Python314/Lib/csv.py" type="text/plain"><tt>csv</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
@@ -6397,7 +6441,8 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#ctypes._aix">ctypes._aix</a>
+    <a href="#core.config_manager">core.config_manager</a>
+ &#8226;   <a href="#ctypes._aix">ctypes._aix</a>
  &#8226;   <a href="#ctypes._endian">ctypes._endian</a>
  &#8226;   <a href="#ctypes._layout">ctypes._layout</a>
  &#8226;   <a href="#ctypes.macholib">ctypes.macholib</a>
@@ -6409,7 +6454,6 @@ imported by:
  &#8226;   <a href="#customtkinter.windows.widgets.scaling.scaling_tracker">customtkinter.windows.widgets.scaling.scaling_tracker</a>
  &#8226;   <a href="#darkdetect._mac_detect">darkdetect._mac_detect</a>
  &#8226;   <a href="#darkdetect._windows_detect">darkdetect._windows_detect</a>
- &#8226;   <a href="#main.py">main.py</a>
  &#8226;   <a href="#multiprocessing.sharedctypes">multiprocessing.sharedctypes</a>
  &#8226;   <a href="#numpy._core._dtype_ctypes">numpy._core._dtype_ctypes</a>
  &#8226;   <a href="#numpy._core._internal">numpy._core._internal</a>
@@ -6630,6 +6674,8 @@ imported by:
     <a href="#customtkinter">customtkinter</a>
  &#8226;   <a href="#customtkinter.windows">customtkinter.windows</a>
  &#8226;   <a href="#customtkinter.windows.widgets.core_widget_classes.ctk_base_class">customtkinter.windows.widgets.core_widget_classes.ctk_base_class</a>
+ &#8226;   <a href="#gui.app">gui.app</a>
+ &#8226;   <a href="#gui.preview_window">gui.preview_window</a>
  &#8226;   <a href="#main.py">main.py</a>
 
   </div>
@@ -11396,6 +11442,70 @@ imported by:
 </div>
 
 <div class="node">
+  <a name="gui"></a>
+  <a target="code" href="///C:/Users/danie/OneDrive/Documentos/GitHub/OpenMug%20Studio/gui/__init__.py" type="text/plain"><tt>gui</tt></a>
+<span class="moduletype">Package</span>  <div class="import">
+imported by:
+    <a href="#gui.app">gui.app</a>
+ &#8226;   <a href="#gui.preview_window">gui.preview_window</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="gui.app"></a>
+  <a target="code" href="///C:/Users/danie/OneDrive/Documentos/GitHub/OpenMug%20Studio/gui/app.py" type="text/plain"><tt>gui.app</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#PIL">PIL</a>
+ &#8226;   <a href="#PIL.Image">PIL.Image</a>
+ &#8226;   <a href="#core.config_manager">core.config_manager</a>
+ &#8226;   <a href="#core.image_processor">core.image_processor</a>
+ &#8226;   <a href="#customtkinter">customtkinter</a>
+ &#8226;   <a href="#gui">gui</a>
+ &#8226;   <a href="#gui.preview_window">gui.preview_window</a>
+ &#8226;   <a href="#os">os</a>
+ &#8226;   <a href="#sys">sys</a>
+ &#8226;   <a href="#tkinter">tkinter</a>
+ &#8226;   <a href="#tkinter.filedialog">tkinter.filedialog</a>
+ &#8226;   <a href="#tkinter.messagebox">tkinter.messagebox</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#main.py">main.py</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="gui.preview_window"></a>
+  <a target="code" href="///C:/Users/danie/OneDrive/Documentos/GitHub/OpenMug%20Studio/gui/preview_window.py" type="text/plain"><tt>gui.preview_window</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#PIL">PIL</a>
+ &#8226;   <a href="#PIL.Image">PIL.Image</a>
+ &#8226;   <a href="#customtkinter">customtkinter</a>
+ &#8226;   <a href="#gui">gui</a>
+ &#8226;   <a href="#os">os</a>
+ &#8226;   <a href="#subprocess">subprocess</a>
+ &#8226;   <a href="#sys">sys</a>
+ &#8226;   <a href="#tkinter">tkinter</a>
+ &#8226;   <a href="#tkinter.filedialog">tkinter.filedialog</a>
+ &#8226;   <a href="#tkinter.messagebox">tkinter.messagebox</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#gui.app">gui.app</a>
+
+  </div>
+
+</div>
+
+<div class="node">
   <a name="gzip"></a>
   <a target="code" href="///C:/Program%20Files/Python314/Lib/gzip.py" type="text/plain"><tt>gzip</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
@@ -12454,12 +12564,12 @@ imports:
   <div class="import">
 imported by:
     <a href="#charset_normalizer.models">charset_normalizer.models</a>
+ &#8226;   <a href="#core.config_manager">core.config_manager</a>
  &#8226;   <a href="#customtkinter.windows.widgets.theme.theme_manager">customtkinter.windows.widgets.theme.theme_manager</a>
  &#8226;   <a href="#importlib.metadata">importlib.metadata</a>
  &#8226;   <a href="#json.decoder">json.decoder</a>
  &#8226;   <a href="#json.encoder">json.encoder</a>
  &#8226;   <a href="#json.scanner">json.scanner</a>
- &#8226;   <a href="#main.py">main.py</a>
  &#8226;   <a href="#multiprocessing.resource_tracker">multiprocessing.resource_tracker</a>
  &#8226;   <a href="#numpy.__config__">numpy.__config__</a>
  &#8226;   <a href="#numpy.testing._private.utils">numpy.testing._private.utils</a>
@@ -20454,6 +20564,8 @@ imported by:
  &#8226;   <a href="#concurrent.futures.process">concurrent.futures.process</a>
  &#8226;   <a href="#concurrent.futures.thread">concurrent.futures.thread</a>
  &#8226;   <a href="#contextlib">contextlib</a>
+ &#8226;   <a href="#core.config_manager">core.config_manager</a>
+ &#8226;   <a href="#core.image_processor">core.image_processor</a>
  &#8226;   <a href="#ctypes">ctypes</a>
  &#8226;   <a href="#ctypes._aix">ctypes._aix</a>
  &#8226;   <a href="#ctypes.macholib.dyld">ctypes.macholib.dyld</a>
@@ -20474,6 +20586,8 @@ imported by:
  &#8226;   <a href="#getopt">getopt</a>
  &#8226;   <a href="#gettext">gettext</a>
  &#8226;   <a href="#glob">glob</a>
+ &#8226;   <a href="#gui.app">gui.app</a>
+ &#8226;   <a href="#gui.preview_window">gui.preview_window</a>
  &#8226;   <a href="#gzip">gzip</a>
  &#8226;   <a href="#http.cookiejar">http.cookiejar</a>
  &#8226;   <a href="#http.server">http.server</a>
@@ -22172,8 +22286,8 @@ imported by:
  &#8226;   <a href="#ctypes.util">ctypes.util</a>
  &#8226;   <a href="#darkdetect._linux_detect">darkdetect._linux_detect</a>
  &#8226;   <a href="#darkdetect._mac_detect">darkdetect._mac_detect</a>
+ &#8226;   <a href="#gui.preview_window">gui.preview_window</a>
  &#8226;   <a href="#http.server">http.server</a>
- &#8226;   <a href="#main.py">main.py</a>
  &#8226;   <a href="#multiprocessing.popen_spawn_win32">multiprocessing.popen_spawn_win32</a>
  &#8226;   <a href="#multiprocessing.util">multiprocessing.util</a>
  &#8226;   <a href="#numpy.f2py">numpy.f2py</a>
@@ -22292,6 +22406,8 @@ imported by:
  &#8226;   <a href="#getopt">getopt</a>
  &#8226;   <a href="#gettext">gettext</a>
  &#8226;   <a href="#glob">glob</a>
+ &#8226;   <a href="#gui.app">gui.app</a>
+ &#8226;   <a href="#gui.preview_window">gui.preview_window</a>
  &#8226;   <a href="#gzip">gzip</a>
  &#8226;   <a href="#http.client">http.client</a>
  &#8226;   <a href="#http.server">http.server</a>
@@ -22303,7 +22419,6 @@ imported by:
  &#8226;   <a href="#linecache">linecache</a>
  &#8226;   <a href="#locale">locale</a>
  &#8226;   <a href="#logging">logging</a>
- &#8226;   <a href="#main.py">main.py</a>
  &#8226;   <a href="#mimetypes">mimetypes</a>
  &#8226;   <a href="#multiprocessing">multiprocessing</a>
  &#8226;   <a href="#multiprocessing.connection">multiprocessing.connection</a>
@@ -22756,7 +22871,8 @@ imported by:
  &#8226;   <a href="#customtkinter.windows.widgets.ctk_tabview">customtkinter.windows.widgets.ctk_tabview</a>
  &#8226;   <a href="#customtkinter.windows.widgets.ctk_textbox">customtkinter.windows.widgets.ctk_textbox</a>
  &#8226;   <a href="#customtkinter.windows.widgets.scaling.scaling_tracker">customtkinter.windows.widgets.scaling.scaling_tracker</a>
- &#8226;   <a href="#main.py">main.py</a>
+ &#8226;   <a href="#gui.app">gui.app</a>
+ &#8226;   <a href="#gui.preview_window">gui.preview_window</a>
  &#8226;   <a href="#tkinter.commondialog">tkinter.commondialog</a>
  &#8226;   <a href="#tkinter.constants">tkinter.constants</a>
  &#8226;   <a href="#tkinter.dialog">tkinter.dialog</a>
@@ -22838,7 +22954,8 @@ imports:
   <div class="import">
 imported by:
     <a href="#customtkinter">customtkinter</a>
- &#8226;   <a href="#main.py">main.py</a>
+ &#8226;   <a href="#gui.app">gui.app</a>
+ &#8226;   <a href="#gui.preview_window">gui.preview_window</a>
 
   </div>
 
@@ -22872,7 +22989,8 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#main.py">main.py</a>
+    <a href="#gui.app">gui.app</a>
+ &#8226;   <a href="#gui.preview_window">gui.preview_window</a>
  &#8226;   <a href="#tkinter">tkinter</a>
  &#8226;   <a href="#tkinter.simpledialog">tkinter.simpledialog</a>
 

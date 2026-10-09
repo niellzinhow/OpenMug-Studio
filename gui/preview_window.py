@@ -4,6 +4,13 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from PIL import Image
 
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 class PreviewWindow(ctk.CTkToplevel):
     def __init__(self, master, a4_final_image, temp_dir, a4_width, a4_height):
         super().__init__(master)
@@ -15,7 +22,7 @@ class PreviewWindow(ctk.CTkToplevel):
         self.a4_height = a4_height
 
         try:
-            self.iconbitmap("OpenMug Studio.ico")
+            self.iconbitmap(resource_path("OpenMug Studio.ico"))
         except:
             pass
         
