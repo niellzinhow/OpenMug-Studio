@@ -5,7 +5,7 @@
   
   **A solução elegante e minimalista para montagem e impressão de estampas de canecas com perfis de cor!**
   
-  [![Versão](https://img.shields.io/badge/Versão-1.3.1-0A84FF.svg)](https://github.com/niellzinhow/OpenMug-Studio/releases/latest)
+  [![Versão](https://img.shields.io/badge/Versão-1.3.2-0A84FF.svg)](https://github.com/niellzinhow/OpenMug-Studio/releases/latest)
   [![Python](https://img.shields.io/badge/Python-3.10+-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
   [![CustomTkinter](https://img.shields.io/badge/GUI-CustomTkinter-0A84FF.svg?style=flat)](https://github.com/TomSchimansky/CustomTkinter)
   [![PyInstaller](https://img.shields.io/badge/Compilado_com-PyInstaller-FFD43B.svg?style=flat&logo=python&logoColor=black)](https://pyinstaller.org/)
@@ -99,5 +99,5 @@ OpenMug Studio/
 ---
 
 <div align="center">
-  <p>Feito com ❤️ para tornar a sublimação mais prática e precisa — <strong>OpenMug Studio v1.3.1</strong></p>
+  <p>Feito com ❤️ para tornar a sublimação mais prática e precisa — <strong>OpenMug Studio v1.3.2</strong></p>
 </div>

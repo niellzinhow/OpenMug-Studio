@@ -490,18 +490,207 @@ class App(ctk.CTk):
                 messagebox.showinfo("Atualização", f"Você já está na versão mais recente ({VERSION}).")
             return
 
-        notes = info["notes"].strip()
-        msg = f"Nova versão disponível: {info['version']} (atual: {VERSION}).\n"
-        if notes:
-            msg += f"\n{notes[:600]}\n"
-        if not updater.is_frozen() or not info["url"]:
-            msg += "\nAbrir a página de download?"
-            if messagebox.askyesno("Atualização disponível", msg):
-                webbrowser.open(updater.RELEASES_PAGE)
+        self._open_update_prompt(info)
+
+    def _open_update_prompt(self, info):
+        """Modal estilizado com texto completo rolável das notas da nova versão."""
+        existing = getattr(self, "_update_prompt_win", None)
+        if existing and existing.winfo_exists():
+            existing.deiconify()
+            existing.attributes("-topmost", True)
+            existing.lift()
+            existing.focus_force()
             return
-        msg += "\nDeseja baixar e instalar agora? O programa será reiniciado."
-        if messagebox.askyesno("Atualização disponível", msg):
-            self._start_download(info)
+
+        can_auto_install = updater.is_frozen() and bool(info.get("url"))
+        notes = (info.get("notes") or "").strip() or "Sem notas detalhadas para esta versão."
+
+        width, height = 580, 520
+        try:
+            scale = ctk.ScalingTracker.get_window_scaling(self) or 1.0
+        except Exception:
+            scale = 1.0
+
+        win = ctk.CTkToplevel(self)
+        self._update_prompt_win = win
+        win.withdraw()
+        win.overrideredirect(True)
+        win.attributes("-topmost", True)
+        win.configure(fg_color=T.BG_MODAL_KEY)
+        try:
+            win.attributes("-transparentcolor", T.BG_MODAL_KEY)
+        except tkinter.TclError:
+            pass
+
+        px_w, px_h = round(width * scale), round(height * scale)
+        x = self.winfo_rootx() + max(0, (self.winfo_width() - px_w) // 2)
+        y = self.winfo_rooty() + max(0, (self.winfo_height() - px_h) // 3)
+        win.geometry(f"{width}x{height}+{x}+{y}")
+
+        shell = ctk.CTkFrame(win, fg_color=T.MODAL_BG, corner_radius=T.RADIUS_MODAL,
+                             border_width=1, border_color=T.MODAL_BORDER, bg_color=T.BG_MODAL_KEY)
+        shell.pack(fill="both", expand=True)
+
+        # Cabeçalho
+        header = ctk.CTkFrame(shell, fg_color="transparent")
+        header.pack(fill="x", padx=22, pady=(16, 4))
+        lbl_header = ctk.CTkLabel(header, text="Atualização disponível", font=T.font(14, "bold"),
+                                  text_color=T.TEXT_TITLE)
+        lbl_header.pack(side="left")
+        btn_close = T.CircleIconButton(header, text="✕", width=28, height=28, corner_radius=14, font=T.font(12, "bold"),
+                                       fg_color=T.PILL_UTILITY, hover_color=T.PILL_UTILITY_HOVER,
+                                       text_color=T.TEXT_MUTED)
+        btn_close.pack(side="right")
+
+        sub = ctk.CTkLabel(
+            shell,
+            text=f"Nova versão {info['version']} disponível  •  versão instalada: {VERSION}",
+            font=T.font(12),
+            text_color=T.TEXT_MUTED,
+            anchor="w",
+        )
+        sub.pack(fill="x", padx=22, pady=(0, 6))
+
+        drag = {}
+        def start_drag(e):
+            drag["dx"], drag["dy"] = e.x_root - win.winfo_x(), e.y_root - win.winfo_y()
+        def do_drag(e):
+            win.geometry(f"+{e.x_root - drag['dx']}+{e.y_root - drag['dy']}")
+        for w in (header, lbl_header, sub):
+            w.bind("<ButtonPress-1>", start_drag)
+            w.bind("<B1-Motion>", do_drag)
+
+        # Rodapé de botões (empacotado antes do card para reservar altura)
+        footer = ctk.CTkFrame(shell, fg_color="transparent")
+        footer.pack(side="bottom", fill="x", padx=22, pady=(8, 18))
+
+        # Card rolável com TODAS as notas (sem corte de caracteres)
+        card = ctk.CTkScrollableFrame(shell, fg_color=T.MODAL_CARD_BG, corner_radius=14,
+                                      border_width=1, border_color=T.MODAL_CARD_BORDER,
+                                      scrollbar_button_color=T.SECONDARY,
+                                      scrollbar_button_hover_color=T.SECONDARY_HOVER)
+        card.pack(fill="both", expand=True, padx=22, pady=6)
+
+        ctk.CTkLabel(card, text=f"O que há de novo na v{info['version']}", font=T.font(15, "bold"),
+                     text_color=T.TEXT_TITLE, anchor="w").pack(fill="x", padx=12, pady=(10, 4))
+
+        for line in notes.split("\n"):
+            stripped = line.strip()
+            if not stripped:
+                ctk.CTkFrame(card, fg_color="transparent", height=4).pack()
+            elif stripped.startswith("•"):
+                ctk.CTkLabel(card, text=stripped, font=T.font(13), text_color=T.TEXT_ON_SECONDARY,
+                             anchor="w", justify="left", wraplength=460).pack(fill="x", padx=(18, 12), pady=2)
+            elif stripped == stripped.upper() and any(c.isalpha() for c in stripped) and len(stripped) < 60:
+                ctk.CTkLabel(card, text=stripped, font=T.font(11, "bold"), text_color=T.MODAL_SECTION,
+                             anchor="w").pack(fill="x", padx=12, pady=(12, 2))
+            else:
+                ctk.CTkLabel(card, text=stripped, font=T.font(13), text_color=T.TEXT_ON_SECONDARY,
+                             anchor="w", justify="left", wraplength=470).pack(fill="x", padx=12, pady=2)
+
+        # Suporte a roda do mouse e Precision Touchpad
+        scroll_acc = [0.0]
+        active = [True]
+
+        def _scroll_pixels(dy_delta):
+            if not active[0] or not win.winfo_exists() or not card.winfo_exists():
+                return
+            if card._parent_canvas.yview() == (0.0, 1.0):
+                return
+            scroll_acc[0] += -dy_delta * 1.5
+            steps = int(scroll_acc[0])
+            if steps != 0:
+                scroll_acc[0] -= steps
+                card._parent_canvas.yview("scroll", steps, "units")
+
+        def _on_wheel(event):
+            if not active[0] or not win.winfo_exists() or not card.winfo_exists():
+                return
+            if not card._check_if_valid_scroll(event.widget):
+                if card._parent_canvas.yview() != (0.0, 1.0):
+                    card._parent_canvas.yview("scroll", -int(event.delta / 6), "units")
+
+        def _on_touchpad(event):
+            if not active[0]:
+                return
+            raw_dy = event.delta & 0xFFFF
+            if raw_dy >= 0x8000:
+                raw_dy -= 0x10000
+            if raw_dy != 0:
+                _scroll_pixels(raw_dy)
+
+        win.bind_all("<MouseWheel>", _on_wheel, add="+")
+        try:
+            win.bind_all("<TouchpadScroll>", _on_touchpad, add="+")
+        except tkinter.TclError:
+            pass
+
+        def _on_app_focus_out(e):
+            if win.winfo_exists():
+                self.after(60, lambda: win.winfo_exists() and self.focus_displayof() is None and win.attributes("-topmost", False))
+
+        def _on_app_focus_in(e):
+            if win.winfo_exists():
+                win.deiconify()
+                win.attributes("-topmost", True)
+                win.lift()
+
+        focus_in_id = self.bind("<FocusIn>", _on_app_focus_in, add="+")
+        focus_out_id = self.bind("<FocusOut>", _on_app_focus_out, add="+")
+        unmap_id = self.bind("<Unmap>", lambda e: e.widget is self and win.winfo_exists() and win.withdraw(), add="+")
+        esc_id = self.bind("<Escape>", lambda e: _close(), add="+")
+
+        def _close():
+            active[0] = False
+            self._update_prompt_win = None
+            for w, seq, fid in ((self, "<FocusIn>", focus_in_id),
+                                (self, "<FocusOut>", focus_out_id),
+                                (self, "<Unmap>", unmap_id),
+                                (self, "<Escape>", esc_id)):
+                try:
+                    if fid and w.winfo_exists():
+                        w.unbind(seq, fid)
+                except Exception:
+                    pass
+            if win.winfo_exists():
+                win.destroy()
+
+        def _confirm():
+            _close()
+            if can_auto_install:
+                self._start_download(info)
+            else:
+                webbrowser.open(updater.RELEASES_PAGE)
+
+        btn_later = ctk.CTkButton(footer, text="Agora não", width=120, height=38, corner_radius=19,
+                                  fg_color=T.SECONDARY, hover_color=T.SECONDARY_HOVER,
+                                  text_color=T.TEXT_ON_SECONDARY, font=T.font(13, "bold"),
+                                  command=_close)
+        btn_later.pack(side="left")
+
+        primary_label = "Baixar e instalar" if can_auto_install else "Abrir página de download"
+        btn_install = ctk.CTkButton(footer, text=primary_label, width=190, height=38, corner_radius=19,
+                                    fg_color=T.ACCENT, hover_color=T.ACCENT_HOVER,
+                                    text_color="#FFFFFF", font=T.font(13, "bold"),
+                                    command=_confirm)
+        btn_install.pack(side="right")
+
+        btn_close.configure(command=_close)
+        win.bind("<Escape>", lambda e: _close())
+        win.protocol("WM_DELETE_WINDOW", _close)
+
+        def _bring_to_front():
+            if not win.winfo_exists():
+                return
+            win.deiconify()
+            win.attributes("-topmost", True)
+            win.lift()
+            win.focus_force()
+
+        win.update_idletasks()
+        _bring_to_front()
+        win.after(60, _bring_to_front)
+        win.after(220, lambda: (_bring_to_front(), win.winfo_exists() and win.grab_set()))
 
     def _start_download(self, info):
         win = ctk.CTkToplevel(self)
