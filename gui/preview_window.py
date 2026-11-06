@@ -4,6 +4,9 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from PIL import Image
 
+from gui import theme as T
+from gui.background import Wallpaper
+
 def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
@@ -36,18 +39,46 @@ class PreviewWindow(ctk.CTkToplevel):
         self.grab_set() 
 
         # Define Fundo da janela (CMYK Midnight)
-        self.configure(fg_color="#0F172A")
+        self.configure(fg_color=T.BG_PREVIEW)
+
+        # Papel de parede dinâmico (camada de fundo; deve existir antes dos demais widgets)
+        self.wallpaper = Wallpaper(self)
 
         self._build_ui()
 
     def _build_ui(self):
-        # Container para centralizar a "Folha de Papel"
-        preview_frame = ctk.CTkFrame(self, fg_color="transparent")
-        preview_frame.pack(expand=True, fill="both", padx=20, pady=20)
+        # --- Barra inferior flutuante (cápsula) ---
+        # Empacotada primeiro para reservar o espaço antes da folha.
+        capsule = ctk.CTkFrame(self, fg_color=T.CAPSULE_BG, height=64, width=640, corner_radius=T.RADIUS_PILL_LG,
+                               border_width=1, border_color=T.CAPSULE_BORDER)
+        capsule.pack(side="bottom", pady=(0, 22))
+        capsule.pack_propagate(False)
+        self.wallpaper.register(capsule)
 
-        # Calcula a altura máxima da folha na tela (~80% da altura do monitor)
+        # Botão Voltar (Retorna intacto para a tela inicial)
+        btn_voltar = ctk.CTkButton(capsule, text="‹  Voltar", width=120, height=40, corner_radius=18,
+                                   fg_color=T.CAPSULE_BACK, hover_color=T.SECONDARY_HOVER,
+                                   text_color=T.TEXT_ON_SECONDARY, font=T.font(13, "bold"),
+                                   command=self.destroy)
+        btn_voltar.pack(side="left", padx=(12, 8), pady=12)
+
+        # Botão Salvar PDF (abre diálogo do sistema)
+        btn_save = ctk.CTkButton(capsule, text="Salvar PDF", width=140, height=40, corner_radius=18,
+                                 fg_color=T.CAPSULE_SECONDARY, hover_color=T.SECONDARY_HOVER,
+                                 text_color=T.TEXT_ON_SECONDARY, font=T.font(13, "bold"),
+                                 command=self.save_pdf_dialog)
+        btn_save.pack(side="right", padx=(8, 12), pady=12)
+
+        # Botão Gerar PDF (Gera temp e abre)
+        btn_generate = ctk.CTkButton(capsule, text="Gerar PDF", width=150, height=40, corner_radius=18,
+                                     fg_color=T.ACCENT, hover_color=T.ACCENT_HOVER, text_color="#FFFFFF",
+                                     font=T.font(13, "bold"),
+                                     command=self.print_image)
+        btn_generate.pack(side="right", padx=(8, 0), pady=12)
+
+        # Calcula a altura máxima da folha na tela (reserva espaço para a cápsula inferior)
         screen_height = self.winfo_screenheight()
-        target_height = int(screen_height * 0.8)
+        target_height = int(screen_height * 0.76)
         
         preview_ratio = target_height / self.a4_height
         preview_width = int(self.a4_width * preview_ratio)
@@ -58,35 +89,17 @@ class PreviewWindow(ctk.CTkToplevel):
         
         tk_image = ctk.CTkImage(light_image=img_resized, dark_image=img_resized, size=(img_resized.width, img_resized.height))
 
+        # Sombra suave > borda fina > papel branco (acabamento premium contra o fundo escuro)
+        # (sem contêiner "transparente": o CTk pintaria a cor da janela por cima do papel de parede)
+        shadow = ctk.CTkFrame(self, fg_color=T.PAPER_SHADOW, corner_radius=6)
+        shadow.pack(expand=True, pady=(20, 14))
+        self.wallpaper.register(shadow)
+        paper_border = ctk.CTkFrame(shadow, fg_color=T.PAPER_BORDER, corner_radius=2)
+        paper_border.pack(padx=7, pady=7)
+
         # O CTkLabel com cor de fundo branca funciona visualmente como o papel físico A4 no centro
-        lbl_paper = ctk.CTkLabel(preview_frame, image=tk_image, text="", fg_color="white")
-        lbl_paper.pack(expand=True)
-
-        # --- Painel Inferior de Botões (Voltar / Confirmar) ---
-        actions_frame = ctk.CTkFrame(self, fg_color="#1E293B", height=80, corner_radius=0)
-        actions_frame.pack(side="bottom", fill="x")
-
-        # Botão Voltar (Retorna intacto para a tela inicial)
-        btn_voltar = ctk.CTkButton(actions_frame, text="Voltar", width=150, height=50, corner_radius=8,
-                                   fg_color="transparent", border_width=2, border_color="#94A3B8", 
-                                   text_color="#94A3B8", hover_color="#334155",
-                                   font=ctk.CTkFont(size=16, weight="bold"),
-                                   command=self.destroy)
-        btn_voltar.pack(side="left", padx=30, pady=15)
-
-        # Botão Salvar PDF (Lado direito, abre diálogo do sistema)
-        btn_save = ctk.CTkButton(actions_frame, text="Salvar PDF", width=180, height=50, corner_radius=8,
-                                 fg_color="#06B6D4", hover_color="#0891B2", text_color="black",
-                                 font=ctk.CTkFont(size=16, weight="bold"), 
-                                 command=self.save_pdf_dialog)
-        btn_save.pack(side="right", padx=(10, 30), pady=15)
-
-        # Botão Gerar PDF (Antigo Confirmar e Imprimir - Gera temp e abre)
-        btn_generate = ctk.CTkButton(actions_frame, text="Gerar PDF", width=180, height=50, corner_radius=8,
-                                     fg_color="#06B6D4", hover_color="#0891B2", text_color="black",
-                                     font=ctk.CTkFont(size=16, weight="bold"), 
-                                     command=self.print_image)
-        btn_generate.pack(side="right", padx=(30, 10), pady=15)
+        lbl_paper = ctk.CTkLabel(paper_border, image=tk_image, text="", fg_color="white", corner_radius=0)
+        lbl_paper.pack(padx=1, pady=1)
 
     def save_pdf_dialog(self):
         try:

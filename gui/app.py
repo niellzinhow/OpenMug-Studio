@@ -2,6 +2,7 @@ import os
 import sys
 import threading
 import webbrowser
+import tkinter
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from PIL import Image
@@ -11,6 +12,8 @@ from core import updater
 from core.version import VERSION, GITHUB_REPO
 from core.image_processor import ImageProcessor
 from gui.preview_window import PreviewWindow
+from gui import theme as T
+from gui.background import Wallpaper
 
 def resource_path(relative_path):
     try:
@@ -18,38 +21,6 @@ def resource_path(relative_path):
     except Exception:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
-
-class ClickableComboBox(ctk.CTkComboBox):
-    """ComboBox somente leitura, com borda contínua na área da seta e clicável em toda a caixa."""
-
-    def _create_bindings(self, sequence=None):
-        super()._create_bindings(sequence)
-        if sequence is None:
-            for tag in ("inner_parts_left", "border_parts_left"):
-                self._canvas.tag_bind(tag, "<Enter>", self._on_enter)
-                self._canvas.tag_bind(tag, "<Leave>", self._on_leave)
-                self._canvas.tag_bind(tag, "<Button-1>", self._clicked)
-            self._entry.bind("<Enter>", self._on_enter)
-            self._entry.bind("<Leave>", self._on_leave)
-            self._entry.bind("<Button-1>", self._clicked)
-
-    def _restore_border(self):
-        color = self._apply_appearance_mode(self._border_color)
-        self._canvas.itemconfig("border_parts_right", outline=color, fill=color)
-
-    def _draw(self, no_color_updates=False):
-        super()._draw(no_color_updates)
-        self._restore_border()
-
-    def _on_enter(self, event=0):
-        super()._on_enter(event)
-        self._restore_border()
-        self._entry.configure(cursor="hand2")
-
-    def _on_leave(self, event=0):
-        super()._on_leave(event)
-        self._restore_border()
-        self._entry.configure(cursor="arrow")
 
 
 class App(ctk.CTk):
@@ -63,7 +34,7 @@ class App(ctk.CTk):
             pass
         self.geometry("850x700")
         self.resizable(True, True)
-        self.configure(fg_color="#0F172A")
+        self.configure(fg_color=T.BG_MAIN)
 
         self.config_manager = ConfigManager()
         self.image_processor = ImageProcessor()
@@ -75,6 +46,9 @@ class App(ctk.CTk):
             {"path": "", "mode": "Centralizar", "label_ref": None, "thumb_ref": None, "actions_frame_ref": None, "combo_mode_ref": None}
         ]
 
+        # Papel de parede dinâmico (camada de fundo; deve existir antes dos demais widgets)
+        self.wallpaper = Wallpaper(self)
+
         self._build_ui()
         
         # Iniciar maximizado no Windows
@@ -85,93 +59,168 @@ class App(ctk.CTk):
         self.after(1500, lambda: self.check_updates(silent=True))
 
     def _build_ui(self):
-        """Constrói a interface gráfica do aplicativo com Card Design (Midnight CMYK)."""
+        """Constrói a interface gráfica do aplicativo (dark glassmorphism minimalista)."""
         
-        # --- TÍTULO DO APP ---
-        img_icon = None
+        # Todos os blocos são CTkFrame SÓLIDOS empilhados diretamente na janela, sobre o papel de parede.
+        # (Contêineres "transparentes" do CTk pintariam a cor da janela por cima da imagem.)
+
+        # --- TÍTULO E CONTROLES DE TOPO (fora de qualquer card, direto sobre o papel de parede) ---
+        icon_pil = None
         try:
-            icon_img = Image.open(resource_path("OpenMug Studio.ico"))
-            img_icon = ctk.CTkImage(light_image=icon_img, dark_image=icon_img, size=(32, 32))
+            icon_pil = Image.open(resource_path("OpenMug Studio.ico"))
         except Exception:
             pass
 
-        if img_icon:
-            self.lbl_main_title = ctk.CTkLabel(self, text=" OpenMug Studio", font=ctk.CTkFont(size=28, weight="bold"), 
-                                               text_color="#F8FAFC", image=img_icon, compound="left")
-        else:
-            self.lbl_main_title = ctk.CTkLabel(self, text="☕ OpenMug Studio", font=ctk.CTkFont(size=28, weight="bold"), 
-                                               text_color="#F8FAFC")
-            
-        self.lbl_main_title.pack(pady=15)
+        # Botões pílula posicionados direto na janela (sem frame intermediário, ajustando cantos ao fundo)
+        try:
+            scale = ctk.ScalingTracker.get_window_scaling(self) or 1.0
+        except Exception:
+            scale = 1.0
 
-        # --- SEÇÃO DE PERFIS ICC (Topo) ---
-        self.icc_card = ctk.CTkFrame(self, fg_color="#1E293B", corner_radius=10)
-        self.icc_card.pack(pady=(0, 10), padx=20, fill="x")
+        notes_icon = T.make_notes_icon()
+        self.btn_notes = T.CircleIconButton(self, text="", image=notes_icon, width=28, height=28,
+                                            corner_radius=14, fg_color=T.PILL_UTILITY, hover_color=T.PILL_UTILITY_HOVER,
+                                            command=self.show_release_notes)
+        self.btn_notes.place(relx=1.0, x=round(-28 * scale), y=round(18 * scale), anchor="ne")
+        self.wallpaper.register(self.btn_notes)
 
-        self.btn_icc = ctk.CTkButton(self.icc_card, text="Procurar Perfil ICC", command=self.select_icc, 
-                                     fg_color="#06B6D4", hover_color="#0891B2", text_color="black", font=ctk.CTkFont(weight="bold"))
-        self.btn_icc.pack(side="left", padx=15, pady=15)
+        self.btn_update = ctk.CTkButton(self, text="Buscar atualizações", width=140, height=28,
+                                        corner_radius=14, font=T.font(11),
+                                        fg_color=T.PILL_UTILITY, hover_color=T.PILL_UTILITY_HOVER,
+                                        text_color=T.TEXT_MUTED,
+                                        command=lambda: self.check_updates(silent=False))
+        # Posicionado à esquerda de btn_notes com 8px de folga (28 margem + 28 botão + 8 espaço = 64)
+        self.btn_update.place(relx=1.0, x=round(-64 * scale), y=round(18 * scale), anchor="ne")
+        self.wallpaper.register(self.btn_update)
+
+        # Desenha ícone RGBA + "OpenMug Studio" + "Versão X" diretamente nos pixels do papel de parede
+        # (transparência real por pixel, sem nenhuma caixa retangular de widget)
+        self.wallpaper.add_header_overlay(
+            title_text="OpenMug Studio",
+            icon_img=icon_pil,
+            version_text=f"Versão {VERSION}",
+            anchor_btn=self.btn_update,
+        )
+
+        # --- CARD DO PERFIL ICC ---
+        self.icc_card = ctk.CTkFrame(self, fg_color=T.CARD_BG, corner_radius=T.RADIUS_CARD,
+                                     border_width=1, border_color=T.CARD_BORDER)
+        self.icc_card.pack(fill="x", padx=28, pady=(64, 8))
+        self.wallpaper.register(self.icc_card, glass=(T.CARD_BG, T.GLASS_ALPHA))
+
+        self.btn_icc = ctk.CTkButton(self.icc_card, text="🔍  Procurar Perfil ICC", command=self.select_icc,
+                                     height=32, corner_radius=T.RADIUS_PILL,
+                                     fg_color=T.PILL_UTILITY, hover_color=T.PILL_UTILITY_HOVER,
+                                     text_color=T.TEXT_ON_SECONDARY, font=T.font(12, "bold"))
+        self.btn_icc.pack(side="left", padx=(16, 12), pady=12)
 
         icc_display = self.config_manager.icc_profile_path if self.config_manager.icc_profile_path else "Nenhum perfil selecionado"
-        self.lbl_icc = ctk.CTkLabel(self.icc_card, text=icc_display, text_color="#94A3B8", wraplength=500)
-        self.lbl_icc.pack(side="left", padx=10, pady=15)
+        self.lbl_icc = ctk.CTkLabel(self.icc_card, text=icc_display, text_color=T.TEXT_MUTED,
+                                    font=T.font(12), wraplength=500)
+        self.lbl_icc.pack(side="left", pady=12)
 
-        self.btn_clear_icc = ctk.CTkButton(self.icc_card, text="✖", width=30, height=30, fg_color="transparent", 
-                                           hover_color="#B71C1C", text_color="#94A3B8", command=self.clear_icc)
+        self.btn_clear_icc = T.CircleIconButton(self.icc_card, text="✕", width=28, height=28, corner_radius=14,
+                                                fg_color="transparent", hover_color=T.DANGER_HOVER,
+                                                text_color=T.TEXT_MUTED, font=T.font(12, "bold"),
+                                                command=self.clear_icc)
         if self.config_manager.icc_profile_path:
-            self.btn_clear_icc.pack(side="right", padx=15, pady=15)
+            self.btn_clear_icc.pack(side="right", padx=(0, 16), pady=12)
 
-        # --- SEÇÃO DE IMAGENS (Meio) ---
-        self.images_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.images_frame.pack(pady=5, padx=20, fill="both", expand=True)
+        # --- BARRA INFERIOR (cápsula): empacotada antes dos cards para sempre reservar espaço ---
+        self.bottom_frame = ctk.CTkFrame(self, fg_color=T.CAPSULE_BG, corner_radius=T.RADIUS_PILL_LG,
+                                         border_width=1, border_color=T.CAPSULE_BORDER)
+        self.bottom_frame.pack(side="bottom", pady=(8, 24))
+        self.wallpaper.register(self.bottom_frame, glass=(T.CAPSULE_BG, T.GLASS_ALPHA))
 
+        self.btn_preview = ctk.CTkButton(self.bottom_frame, text="Gerar Prévia",
+                                         command=self.generate_preview, height=44, width=220,
+                                         corner_radius=T.RADIUS_PILL_LG,
+                                         fg_color=T.ACCENT, hover_color=T.ACCENT_HOVER, text_color="#FFFFFF",
+                                         font=T.font(15, "bold"))
+        self.btn_preview.pack(side="left", padx=(12, 6), pady=12)
+
+        self.btn_clear_all = ctk.CTkButton(self.bottom_frame, text="🗑  Limpar Tudo",
+                                           command=self.clear_all_images, height=44, width=150,
+                                           corner_radius=T.RADIUS_PILL_LG,
+                                           fg_color=T.CLEAR_ALL, hover_color=T.CLEAR_ALL_HOVER,
+                                           state="disabled", text_color=T.TEXT_BODY,
+                                           text_color_disabled=T.TEXT_DISABLED,
+                                           font=T.font(13, "bold"))
+        self.btn_clear_all.pack(side="left", padx=(6, 12), pady=12)
+
+        # --- CARDS DAS ARTES (Meio) ---
         for i in range(3):
-            # Cria um "Card" para cada arte
-            card_frame = ctk.CTkFrame(self.images_frame, fg_color="#1E293B", corner_radius=10)
-            card_frame.pack(pady=10, padx=0, fill="x")
+            card_frame = ctk.CTkFrame(self, fg_color=T.CARD_BG, corner_radius=T.RADIUS_CARD,
+                                      border_width=1, border_color=T.CARD_BORDER)
+            card_frame.pack(pady=8, padx=28, fill="x")
+            self.wallpaper.register(card_frame, glass=(T.CARD_BG, T.GLASS_ALPHA))
+            self._bind_card_hover(card_frame)
 
-            # 1. Miniatura (Extrema Esquerda)
-            lbl_thumb = ctk.CTkLabel(card_frame, text="Sem Imagem", width=210, height=95, fg_color="#0F172A", text_color="#94A3B8", corner_radius=8)
-            lbl_thumb.pack(side="left", padx=15, pady=15)
+            # 1. Miniatura (Extrema Esquerda, proporção 16:9)
+            lbl_thumb = ctk.CTkLabel(card_frame, text="🖼", font=T.font(30), width=T.THUMB_SIZE[0], height=T.THUMB_SIZE[1],
+                                     fg_color=T.THUMB_BG, text_color=T.TEXT_DISABLED, corner_radius=T.RADIUS_THUMB)
+            lbl_thumb.pack(side="left", padx=18, pady=16)
 
             # 2. Controles Principais (Centro - Expandido)
             middle_frame = ctk.CTkFrame(card_frame, fg_color="transparent")
-            middle_frame.pack(side="left", fill="x", expand=True, padx=10, pady=10)
+            middle_frame.pack(side="left", fill="x", expand=True, padx=10, pady=12)
 
-            lbl_title = ctk.CTkLabel(middle_frame, text=f"Arte {i+1}", font=ctk.CTkFont(size=16, weight="bold"), text_color="#F8FAFC")
-            lbl_title.pack(anchor="w", pady=(0, 5))
+            lbl_title = ctk.CTkLabel(middle_frame, text=f"Arte {i+1}", font=T.font(15, "bold"), text_color=T.TEXT_TITLE)
+            lbl_title.pack(anchor="w", pady=(0, 6))
 
-            btn_img = ctk.CTkButton(middle_frame, text="Escolher Imagem", command=lambda idx=i: self.select_image(idx), 
-                                    fg_color="#334155", hover_color="#475569", text_color="#F8FAFC")
-            btn_img.pack(anchor="w", pady=5)
+            btn_img = ctk.CTkButton(middle_frame, text="Escolher Imagem", command=lambda idx=i: self.select_image(idx),
+                                    height=32, corner_radius=T.RADIUS_PILL, font=T.font(12, "bold"),
+                                    fg_color=T.PILL_BUTTON, hover_color=T.PILL_BUTTON_HOVER, text_color="#FFFFFF")
+            btn_img.pack(anchor="w", pady=4)
 
-            lbl_path = ctk.CTkLabel(middle_frame, text="Nenhuma imagem selecionada", text_color="#94A3B8", anchor="w")
-            lbl_path.pack(anchor="w", pady=(5, 0))
+            lbl_path = ctk.CTkLabel(middle_frame, text="Nenhuma imagem selecionada", text_color=T.TEXT_MUTED,
+                                    font=T.font(12), anchor="w")
+            lbl_path.pack(anchor="w", pady=(6, 0))
 
             # 3. Configurações da Arte (Extrema Direita)
             right_frame = ctk.CTkFrame(card_frame, fg_color="transparent")
-            right_frame.pack(side="right", padx=20, pady=10)
+            right_frame.pack(side="right", padx=22, pady=12)
 
-            lbl_mode = ctk.CTkLabel(right_frame, text="Modo de Encaixe:", text_color="#94A3B8")
-            lbl_mode.pack(anchor="e", pady=(0, 2))
+            lbl_mode = ctk.CTkLabel(right_frame, text="Modo de Encaixe:", text_color=T.TEXT_MUTED, font=T.font(11))
+            lbl_mode.pack(anchor="e", pady=(0, 4))
 
-            combo_mode = ClickableComboBox(right_frame, values=["Centralizar", "Cortar", "Redimensionar"], state="readonly",
-                                         command=lambda val, idx=i: self.set_image_mode(val, idx),
-                                         fg_color="#334155", border_color="#475569", button_color="#334155", button_hover_color="#334155",
-                                         dropdown_fg_color="#334155", dropdown_hover_color="#475569",
-                                         dropdown_text_color="#F8FAFC", text_color="#F8FAFC")
+            combo_mode = T.PillOptionMenu(
+                right_frame,
+                values=["Centralizar", "Cortar", "Redimensionar"],
+                command=lambda val, idx=i: self.set_image_mode(val, idx),
+                width=142,
+                height=33,
+                corner_radius=16,
+                dynamic_resizing=False,
+                fg_color=T.MENU_BG,
+                button_color=T.MENU_BG,
+                button_hover_color=T.MENU_HOVER,
+                hover_color=T.MENU_HOVER,
+                text_color=T.MENU_TEXT,
+                arrow_color=T.MENU_ARROW,
+                dropdown_fg_color=T.DROPDOWN_BG,
+                dropdown_hover_color=T.DROPDOWN_HOVER,
+                dropdown_text_color=T.DROPDOWN_TEXT,
+                dropdown_border_color=T.DROPDOWN_BORDER,
+                font_obj=T.font(12),
+                dropdown_font_obj=T.font(12),
+            )
             combo_mode.set(self.images_data[i]["mode"])
             combo_mode.pack(anchor="e", pady=(0, 10))
 
             actions_frame = ctk.CTkFrame(right_frame, fg_color="transparent")
             
-            btn_duplicate = ctk.CTkButton(actions_frame, text="⧉ Duplicar", width=80, 
-                                          fg_color="#005b9f", hover_color="#003f6f",
+            btn_duplicate = ctk.CTkButton(actions_frame, text="⧉ Duplicar", width=80, height=28,
+                                          corner_radius=T.RADIUS_PILL, font=T.font(11, "bold"),
+                                          fg_color=T.SECONDARY, hover_color=T.SECONDARY_HOVER,
+                                          text_color=T.TEXT_ON_SECONDARY,
                                           command=lambda idx=i: self.duplicate_image(idx))
-            btn_duplicate.pack(side="left", padx=(0, 5))
+            btn_duplicate.pack(side="left", padx=(0, 6))
 
-            btn_clear = ctk.CTkButton(actions_frame, text="✖ Limpar", width=80, 
-                                      fg_color="#B71C1C", hover_color="#8B0000",
+            btn_clear = ctk.CTkButton(actions_frame, text="✕ Limpar", width=80, height=28,
+                                      corner_radius=T.RADIUS_PILL, font=T.font(11, "bold"),
+                                      fg_color=T.DANGER_BG, hover_color=T.DANGER_HOVER,
+                                      text_color=T.DANGER_TEXT,
                                       command=lambda idx=i: self.remove_image(idx))
             btn_clear.pack(side="left")
 
@@ -180,44 +229,18 @@ class App(ctk.CTk):
             self.images_data[i]["actions_frame_ref"] = actions_frame
             self.images_data[i]["combo_mode_ref"] = combo_mode
 
-        # --- SEÇÃO DE AÇÃO E PRÉVIA (Base) ---
-        self.bottom_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.bottom_frame.pack(pady=(10, 20), padx=20, fill="x")
+    def _bind_card_hover(self, card):
+        """Realce sutil do card ao passar o mouse (mantém o realce enquanto o cursor estiver sobre os filhos)."""
+        def inside():
+            x, y = card.winfo_pointerxy()
+            return (card.winfo_rootx() <= x < card.winfo_rootx() + card.winfo_width()
+                    and card.winfo_rooty() <= y < card.winfo_rooty() + card.winfo_height())
 
-        # Container para centralizar os botões
-        buttons_frame = ctk.CTkFrame(self.bottom_frame, fg_color="transparent")
-        buttons_frame.pack(pady=5)
+        def tone(base):
+            return self.wallpaper.glass(card, base, T.GLASS_ALPHA)
 
-        self.btn_preview = ctk.CTkButton(buttons_frame, text="Gerar Prévia", 
-                                         command=self.generate_preview, height=50, width=300, corner_radius=8,
-                                         fg_color="#06B6D4", hover_color="#0891B2", text_color="black",
-                                         font=ctk.CTkFont(size=18, weight="bold"))
-        self.btn_preview.pack(side="left", padx=10)
-
-        self.btn_clear_all = ctk.CTkButton(buttons_frame, text="🗑 Limpar Tudo", 
-                                           command=self.clear_all_images, height=50, width=150, corner_radius=8,
-                                           fg_color="#333333", hover_color="#555555", state="disabled", text_color="#F8FAFC",
-                                           font=ctk.CTkFont(size=14, weight="bold"))
-        self.btn_clear_all.pack(side="left", padx=10)
-
-        # Versão e atualização (canto superior direito)
-        update_frame = ctk.CTkFrame(self, fg_color="transparent")
-        update_frame.place(relx=1.0, x=-20, y=15, anchor="ne")
-
-        self.lbl_version = ctk.CTkLabel(update_frame, text=f"Versão {VERSION}", text_color="#94A3B8")
-        self.lbl_version.pack(side="left", padx=(0, 10))
-
-        self.btn_update = ctk.CTkButton(update_frame, text="Buscar atualizações", width=150, height=28,
-                                        fg_color="transparent", border_width=1, border_color="#475569",
-                                        text_color="#94A3B8", hover_color="#334155",
-                                        command=lambda: self.check_updates(silent=False))
-        self.btn_update.pack(side="left")
-
-        self.btn_notes = ctk.CTkButton(update_frame, text="📄", width=28, height=28,
-                                       fg_color="transparent", border_width=1, border_color="#475569",
-                                       text_color="#94A3B8", hover_color="#334155",
-                                       command=self.show_release_notes)
-        self.btn_notes.pack(side="left", padx=(6, 0))
+        card.bind("<Enter>", lambda e: card.configure(fg_color=tone(T.CARD_BG_HOVER)), add="+")
+        card.bind("<Leave>", lambda e: None if inside() else card.configure(fg_color=tone(T.CARD_BG)), add="+")
 
     # --- NOTAS DA VERSÃO ---
     def show_release_notes(self):
@@ -242,29 +265,80 @@ class App(ctk.CTk):
         else:
             body = "Não há notas publicadas para esta versão."
 
+        width, height = 560, 500
         win = ctk.CTkToplevel(self)
-        win.title(f"Notas da versão {VERSION}")
-        win.geometry("520x420")
-        win.configure(fg_color="#0F172A")
-        win.transient(self)
+        win.withdraw()
+        win.overrideredirect(True)  # sem moldura nativa: o contorno é desenhado pelo próprio modal
+        win.configure(fg_color=T.BG_MODAL_KEY)
         try:
-            win.after(200, lambda: win.iconbitmap(resource_path("OpenMug Studio.ico")))
-        except Exception:
+            win.attributes("-transparentcolor", T.BG_MODAL_KEY)  # cantos arredondados reais (Windows)
+        except tkinter.TclError:
             pass
+        x = self.winfo_rootx() + max(0, (self.winfo_width() - width) // 2)
+        y = self.winfo_rooty() + max(0, (self.winfo_height() - height) // 3)
+        win.geometry(f"{width}x{height}+{x}+{y}")
 
-        ctk.CTkLabel(win, text=f"OpenMug Studio {VERSION}", font=ctk.CTkFont(size=18, weight="bold"),
-                     text_color="#F8FAFC").pack(anchor="w", padx=20, pady=(15, 5))
+        shell = ctk.CTkFrame(win, fg_color=T.MODAL_BG, corner_radius=T.RADIUS_MODAL,
+                             border_width=1, border_color=T.MODAL_BORDER, bg_color=T.BG_MODAL_KEY)
+        shell.pack(fill="both", expand=True)
 
-        box = ctk.CTkTextbox(win, fg_color="#1E293B", text_color="#F8FAFC", wrap="word",
-                             font=ctk.CTkFont(size=14))
-        box.pack(fill="both", expand=True, padx=20, pady=5)
-        box.insert("1.0", body)
-        box.configure(state="disabled")
+        # Cabeçalho (também serve para arrastar a janela)
+        header = ctk.CTkFrame(shell, fg_color="transparent")
+        header.pack(fill="x", padx=22, pady=(16, 6))
+        lbl_header = ctk.CTkLabel(header, text=f"Notas da versão {VERSION}", font=T.font(14, "bold"),
+                                  text_color=T.TEXT_TITLE)
+        lbl_header.pack(side="left")
+        btn_close = T.CircleIconButton(header, text="✕", width=28, height=28, corner_radius=14, font=T.font(12, "bold"),
+                                       fg_color=T.PILL_UTILITY, hover_color=T.PILL_UTILITY_HOVER,
+                                       text_color=T.TEXT_MUTED, command=win.destroy)
+        btn_close.pack(side="right")
 
-        link = ctk.CTkLabel(win, text=f"github.com/{GITHUB_REPO}", text_color="#06B6D4", cursor="hand2",
-                            font=ctk.CTkFont(size=13, underline=True))
-        link.pack(pady=(5, 15))
+        drag = {}
+        def start_drag(e):
+            drag["dx"], drag["dy"] = e.x_root - win.winfo_x(), e.y_root - win.winfo_y()
+        def do_drag(e):
+            win.geometry(f"+{e.x_root - drag['dx']}+{e.y_root - drag['dy']}")
+        for w in (header, lbl_header):
+            w.bind("<ButtonPress-1>", start_drag)
+            w.bind("<B1-Motion>", do_drag)
+
+        # Card de conteúdo
+        card = ctk.CTkScrollableFrame(shell, fg_color=T.MODAL_CARD_BG, corner_radius=14,
+                                      border_width=1, border_color=T.MODAL_CARD_BORDER,
+                                      scrollbar_button_color=T.SECONDARY,
+                                      scrollbar_button_hover_color=T.SECONDARY_HOVER)
+        card.pack(fill="both", expand=True, padx=22, pady=6)
+
+        ctk.CTkLabel(card, text=f"OpenMug Studio {VERSION}", font=T.font(16, "bold"),
+                     text_color=T.TEXT_TITLE, anchor="w").pack(fill="x", padx=12, pady=(10, 4))
+
+        for line in body.split("\n"):
+            stripped = line.strip()
+            if not stripped:
+                ctk.CTkFrame(card, fg_color="transparent", height=4).pack()
+            elif stripped.startswith("•"):
+                ctk.CTkLabel(card, text=stripped, font=T.font(13), text_color=T.TEXT_ON_SECONDARY,
+                             anchor="w", justify="left", wraplength=440).pack(fill="x", padx=(18, 12), pady=2)
+            elif stripped == stripped.upper() and any(c.isalpha() for c in stripped) and len(stripped) < 60:
+                ctk.CTkLabel(card, text=stripped, font=T.font(11, "bold"), text_color=T.MODAL_SECTION,
+                             anchor="w").pack(fill="x", padx=12, pady=(12, 2))
+            else:
+                ctk.CTkLabel(card, text=stripped, font=T.font(13), text_color=T.TEXT_ON_SECONDARY,
+                             anchor="w", justify="left", wraplength=450).pack(fill="x", padx=12, pady=2)
+
+        # Rodapé: link do repositório
+        link = ctk.CTkLabel(shell, text=f"github.com/{GITHUB_REPO}", text_color=T.ACCENT, cursor="hand2",
+                            font=T.font(12))
+        link.pack(pady=(8, 16))
         link.bind("<Button-1>", lambda e: webbrowser.open(f"https://github.com/{GITHUB_REPO}"))
+        link.bind("<Enter>", lambda e: link.configure(font=T.font(12, underline=True), text_color=T.ACCENT_HOVER))
+        link.bind("<Leave>", lambda e: link.configure(font=T.font(12), text_color=T.ACCENT))
+
+        win.bind("<Escape>", lambda e: win.destroy())
+        win.deiconify()
+        win.lift()
+        win.focus_force()
+        win.after(100, lambda: win.winfo_exists() and win.grab_set())
 
     # --- ATUALIZAÇÃO (GitHub Releases) ---
     def check_updates(self, silent=True):
@@ -309,12 +383,13 @@ class App(ctk.CTk):
         win.title("Atualizando")
         win.geometry("360x110")
         win.resizable(False, False)
-        win.configure(fg_color="#0F172A")
+        win.configure(fg_color=T.BG_MAIN)
         win.transient(self)
         win.grab_set()
         win.protocol("WM_DELETE_WINDOW", lambda: None)
-        ctk.CTkLabel(win, text=f"Baixando versão {info['version']}...", text_color="#F8FAFC").pack(pady=(20, 10))
-        bar = ctk.CTkProgressBar(win, width=300, progress_color="#06B6D4")
+        ctk.CTkLabel(win, text=f"Baixando versão {info['version']}...", text_color=T.TEXT_TITLE,
+                     font=T.font(13)).pack(pady=(20, 10))
+        bar = ctk.CTkProgressBar(win, width=300, progress_color=T.ACCENT, fg_color=T.SECONDARY)
         bar.set(0)
         bar.pack()
 
@@ -348,12 +423,22 @@ class App(ctk.CTk):
         if filepath:
             self.config_manager.save_config(filepath)
             self.lbl_icc.configure(text=filepath)
-            self.btn_clear_icc.pack(side="right", padx=15, pady=15)
+            self.btn_clear_icc.pack(side="right", padx=(0, 16), pady=12)
 
     def clear_icc(self):
         self.config_manager.save_config("")
         self.lbl_icc.configure(text="Nenhum perfil selecionado")
         self.btn_clear_icc.pack_forget()
+
+    def _set_thumbnail(self, index, filepath):
+        """Gera a miniatura com cantos arredondados e a exibe no card."""
+        with Image.open(filepath) as img:
+            img_copy = img.copy()
+            img_copy.thumbnail(T.THUMB_SIZE, Image.Resampling.LANCZOS)
+            img_copy = T.rounded_image(img_copy)
+            # CTkImage garante uma renderização bonita e fácil de atualizar
+            thumb_tk = ctk.CTkImage(light_image=img_copy, dark_image=img_copy, size=(img_copy.width, img_copy.height))
+            self.images_data[index]["thumb_ref"].configure(image=thumb_tk, text="")
 
     def select_image(self, index):
         filepath = filedialog.askopenfilename(
@@ -372,17 +457,12 @@ class App(ctk.CTk):
 
             # Gera a miniatura (Thumbnail)
             try:
-                with Image.open(filepath) as img:
-                    img_copy = img.copy()
-                    img_copy.thumbnail((210, 95), Image.Resampling.LANCZOS)
-                    # CTkImage garante uma renderização bonita e fácil de atualizar
-                    thumb_tk = ctk.CTkImage(light_image=img_copy, dark_image=img_copy, size=(img_copy.width, img_copy.height))
-                    self.images_data[index]["thumb_ref"].configure(image=thumb_tk, text="")
-                    
-                    # Exibe os botões de ação da imagem (Limpar e Duplicar)
-                    self.images_data[index]["actions_frame_ref"].pack(anchor="e")
-                    
-                    self.update_clear_all_state()
+                self._set_thumbnail(index, filepath)
+                
+                # Exibe os botões de ação da imagem (Limpar e Duplicar)
+                self.images_data[index]["actions_frame_ref"].pack(anchor="e")
+                
+                self.update_clear_all_state()
             except Exception as e:
                 print(f"Erro ao carregar miniatura: {e}")
 
@@ -390,7 +470,7 @@ class App(ctk.CTk):
         """Remove a imagem do bloco selecionado e esconde os botões de ação."""
         self.images_data[index]["path"] = ""
         self.images_data[index]["label_ref"].configure(text="Nenhuma imagem selecionada")
-        self.images_data[index]["thumb_ref"].configure(image="", text="Sem Imagem")
+        self.images_data[index]["thumb_ref"].configure(image="", text="🖼")
         self.images_data[index]["actions_frame_ref"].pack_forget()
         
         # Reseta o modo para "Centralizar" ao limpar
@@ -429,23 +509,16 @@ class App(ctk.CTk):
             self.images_data[target_index]["combo_mode_ref"].set(target_mode)
 
         try:
-            with Image.open(target_path) as img:
-                img_copy = img.copy()
-                img_copy.thumbnail((210, 95), Image.Resampling.LANCZOS)
-                thumb_tk = ctk.CTkImage(light_image=img_copy, dark_image=img_copy, size=(img_copy.width, img_copy.height))
-                self.images_data[target_index]["thumb_ref"].configure(image=thumb_tk, text="")
-                self.images_data[target_index]["actions_frame_ref"].pack(anchor="e")
-                self.update_clear_all_state()
+            self._set_thumbnail(target_index, target_path)
+            self.images_data[target_index]["actions_frame_ref"].pack(anchor="e")
+            self.update_clear_all_state()
         except Exception as e:
             print(f"Erro ao duplicar miniatura: {e}")
 
     def update_clear_all_state(self):
         """Ativa ou desativa o botão de limpar tudo com base nas imagens."""
         has_image = any(item["path"] != "" for item in self.images_data)
-        if has_image:
-            self.btn_clear_all.configure(state="normal", fg_color="#8B0000") # Vermelho Escuro Discreto
-        else:
-            self.btn_clear_all.configure(state="disabled", fg_color="#333333") # Cinza
+        self.btn_clear_all.configure(state="normal" if has_image else "disabled")
 
     def clear_all_images(self):
         """Remove todas as imagens de uma só vez."""
