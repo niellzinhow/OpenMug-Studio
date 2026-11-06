@@ -58,6 +58,13 @@ class App(ctk.CTk):
         # Verificação silenciosa de atualização ao abrir
         self.after(1500, lambda: self.check_updates(silent=True))
 
+        # Limpa a pasta temp sempre que o programa for fechado
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _on_close(self):
+        self.config_manager.cleanup_temp()
+        self.destroy()
+
     def _build_ui(self):
         """Constrói a interface gráfica do aplicativo (dark glassmorphism minimalista)."""
         
@@ -726,6 +733,7 @@ class App(ctk.CTk):
         except Exception as e:
             messagebox.showerror("Atualização", f"Não foi possível aplicar a atualização:\n{e}")
             return
+        self.config_manager.cleanup_temp()
         self.destroy()
         sys.exit(0)
 

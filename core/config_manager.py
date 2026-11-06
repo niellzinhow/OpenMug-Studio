@@ -1,13 +1,19 @@
 import os
+import sys
 import json
+import shutil
+import atexit
 
 class ConfigManager:
     def __init__(self):
-        self.config_file = "config.json"
-        self.temp_dir = "temp"
+        # Usa a pasta do executável (quando compilado) ou a raiz do projeto para evitar caminhos relativos soltos
+        base_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.path.abspath(".")
+        self.config_file = os.path.join(base_dir, "config.json")
+        self.temp_dir = os.path.join(base_dir, "temp")
         self.icc_profile_path = ""
         self._create_directories()
         self._load_config()
+        atexit.register(self.cleanup_temp)
 
     def _create_directories(self):
         """Cria a pasta temporária e tenta ocultá-la no Windows."""
@@ -40,3 +46,18 @@ class ConfigManager:
                 json.dump(config, f, ensure_ascii=False, indent=4)
         except Exception as e:
             print(f"Erro ao salvar config.json: {e}")
+
+    def cleanup_temp(self):
+        """Limpa todos os arquivos e subpastas dentro da pasta temp ao fechar o programa."""
+        if not os.path.isdir(self.temp_dir):
+            return
+        for entry in os.listdir(self.temp_dir):
+            full_path = os.path.join(self.temp_dir, entry)
+            try:
+                if os.path.isfile(full_path) or os.path.islink(full_path):
+                    os.remove(full_path)
+                elif os.path.isdir(full_path):
+                    shutil.rmtree(full_path, ignore_errors=True)
+            except OSError:
+                # Caso algum PDF ainda esteja aberto no leitor no instante do fechamento, ignora sem travar
+                pass
