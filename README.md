@@ -3,11 +3,11 @@
   
   # ☕ OpenMug Studio
   
-  **A solução definitiva e elegante para impressão de estampas de canecas com perfis de cor!**
+  **A solução elegante e minimalista para montagem e impressão de estampas de canecas com perfis de cor!**
   
-  [![Versão](https://img.shields.io/badge/Versão-1.0-blue.svg)](https://github.com/niellzinhow/OpenMug-Studio)
-  [![Python](https://img.shields.io/badge/Python-3.x-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
-  [![CustomTkinter](https://img.shields.io/badge/GUI-CustomTkinter-005b9f.svg?style=flat)](https://github.com/TomSchimansky/CustomTkinter)
+  [![Versão](https://img.shields.io/badge/Versão-1.3.1-0A84FF.svg)](https://github.com/niellzinhow/OpenMug-Studio/releases/latest)
+  [![Python](https://img.shields.io/badge/Python-3.10+-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+  [![CustomTkinter](https://img.shields.io/badge/GUI-CustomTkinter-0A84FF.svg?style=flat)](https://github.com/TomSchimansky/CustomTkinter)
   [![PyInstaller](https://img.shields.io/badge/Compilado_com-PyInstaller-FFD43B.svg?style=flat&logo=python&logoColor=black)](https://pyinstaller.org/)
   
 </div>
@@ -16,75 +16,88 @@
 
 ## 🎨 O que é o OpenMug Studio?
 
-O **OpenMug Studio** é um aplicativo desktop projetado para facilitar a vida de profissionais que trabalham com sublimação de canecas. Com uma interface linda e moderna no estilo *Midnight CMYK* (Dark Mode), ele resolve o maior problema da sublimação: **a conversão e aplicação precisa de perfis de cor (ICC)** antes da impressão.
+O **OpenMug Studio** é um aplicativo desktop projetado para facilitar o fluxo de trabalho de quem produz canecas por sublimação. Com uma interface moderna em estilo **Dark Glassmorphism** — papel de parede abstrato dinâmico, cards translúcidos e controles em formato de pílula —, ele resolve de forma simples a montagem das estampas e a **conversão precisa de perfis de cor (ICC/ICM)** antes da impressão.
 
-Ele permite organizar facilmente até **3 artes** para canecas padrão (325 ml) em uma única folha A4, redimensionando automaticamente na medida perfeita, aplicando o perfil de cor da sua tinta e gerando um PDF pronto para a impressão, tudo isso garantindo economia de papel e cores fiéis!
+Organize até **3 artes** para canecas padrão (325 ml) em uma única folha A4 a **300 DPI**, aplique o perfil de cor da sua tinta (opcional), visualize o resultado na hora e exporte um PDF pronto para imprimir com economia de papel e fidelidade de cores.
 
 ---
 
 ## ✨ Funcionalidades
 
-- 🎛️ **Aplicação de Perfil ICC:** Suporte completo para carregar perfis `.icc` ou `.icm` para cores 100% precisas na sua impressora sublimática.
-- 📐 **Montagem Automática em A4:** Encaixa de 1 a 3 artes (tamanho padrão de canecas de 325 ml) em uma única folha A4 em alta resolução (300 DPI).
-- 🖼️ **Modos de Encaixe:** Escolha entre *Centralizar* (padrão: ajusta à altura mantendo a proporção original e centraliza na folha), *Cortar* (mantém a proporção cortando pelo centro) ou *Redimensionar* (estica para cobrir a área exata).
-- 👁️‍🗨️ **Visualização (Preview) Realista:** Veja como sua folha A4 ficará antes de imprimir.
-- 💾 **Geração de PDF:** O programa sempre exportará o seu trabalho como um arquivo PDF pronto para a impressão (a impressão direta na impressora ainda não está disponível pelo programa).
-- 🚀 **Pronto para uso:** Não requer instalação, basta baixar o executável (versão Standalone).
+- 🎛️ **Aplicação de Perfil ICC (Opcional):** Carregue perfis `.icc` ou `.icm` (como o perfil incluso na pasta `ICM/`) para cores precisas na sua impressora sublimática, ou limpe a seleção com um clique quando quiser exportar sem conversão.
+- 📐 **Montagem Automática em A4 (300 DPI):** Posiciona de 1 a 3 artes (`2362 × 1122 px`, ~20 cm de largura com margens seguras) perfeitamente espaçadas em uma folha A4 (`2480 × 3508 px`).
+- 🖼️ **3 Modos de Encaixe por Arte:**
+  - **Centralizar *(padrão)*:** Ajusta a imagem à altura da caneca mantendo a proporção original e centraliza horizontalmente na folha.
+  - **Cortar:** Preenche toda a área da caneca preservando a proporção e cortando o excesso pelo centro.
+  - **Redimensionar:** Ajusta a largura e a altura para cobrir exatamente a área da caneca.
+- 👁️‍🗨️ **Pré-visualização A4 Refinada:** Confira a folha montada com acabamento realista sobre fundo escuro e controles em cápsula flutuante.
+- 💾 **Exportação em PDF:** Gere e abra imediatamente no seu leitor padrão (`Gerar PDF`) ou escolha onde guardar o arquivo (`Salvar PDF`).
+- 🔄 **Atualização Automática via GitHub Releases:** O programa verifica novas versões ao iniciar (ou pelo botão `Buscar atualizações`), baixa o novo executável com verificação de integridade (SHA-256) e reinicia atualizado automaticamente.
+- 📄 **Notas da Versão Integradas:** Botão dedicado no canto superior direito para consultar o histórico de novidades diretamente no app.
+- 🚀 **Executável Standalone:** Não requer instalação de Python para o usuário final — basta baixar na aba [Releases](https://github.com/niellzinhow/OpenMug-Studio/releases/latest) e abrir.
 
 ---
 
-## 📖 Tutorial: Como Usar
+## 📖 Como Usar
 
-O uso do OpenMug Studio é focado em praticidade. Siga os passos abaixo:
-
-1. **Abra o programa.**
-2. **Selecione seu Perfil ICC:** No topo da tela, clique em `Procurar Perfil ICC` e escolha o arquivo fornecido pelo fabricante da sua tinta sublimática.
+1. **Abra o OpenMug Studio.**
+2. **Selecione seu Perfil ICC *(opcional)*:** No card superior, clique em `🔍 Procurar Perfil ICC` e escolha o arquivo `.icc` ou `.icm` da sua tinta sublimática. A escolha fica salva automaticamente para os próximos usos.
 3. **Adicione suas Artes:**
-   - Nos blocos de "Arte 1", "Arte 2" e "Arte 3", clique em `Escolher Imagem`.
-   - Selecione as imagens da sua caneca (PNG, JPG, etc).
-   - *Dica:* Você pode duplicar uma arte rapidamente clicando no botão `⧉ Duplicar`!
-4. **Ajuste o Modo de Encaixe:** Para cada arte, selecione se deseja *Centralizar* (padrão), *Cortar* ou *Redimensionar*.
-5. **Gere a Prévia:** Clique no botão azul gigante na parte inferior: `Gerar Prévia`.
-6. **Imprima ou Salve:** Na tela de visualização, você pode clicar em `Salvar PDF` para guardar o arquivo, ou em `Gerar PDF` para abrir automaticamente o PDF gerado no seu leitor padrão, de onde você fará a impressão. *(Nota: A impressão não é feita diretamente pelo programa, ele gera o PDF para garantir a qualidade final).*
+   - Em **Arte 1**, **Arte 2** e **Arte 3**, clique em `Escolher Imagem` e selecione os arquivos (`PNG`, `JPG`, `TIFF`, `BMP`).
+   - *Dica:* Use `⧉ Duplicar` para copiar rapidamente a mesma arte e seu modo de encaixe para outro espaço livre, ou `🗑 Limpar Tudo` na barra inferior para recomeçar.
+4. **Escolha o Modo de Encaixe:** No menu em pílula à direita de cada card, escolha entre **Centralizar** *(padrão)*, **Cortar** ou **Redimensionar**.
+5. **Gere a Prévia:** Clique em `Gerar Prévia` na barra inferior.
+6. **Exporte para Impressão:** Na tela de prévia, clique em `Gerar PDF` (abre direto no leitor padrão do sistema) ou em `Salvar PDF` (escolhe a pasta de destino).
 
-> ⚠️ **Lembrete de Impressão:** Ao imprimir, certifique-se de configurar a sua impressora (ex: Epson) para "Papel Apresentação Premium Fosco", marcar a opção "Sem Ajuste de Cor" (já que o programa aplicou o perfil) e ativar "Espelhar Imagem".
+> ⚠️ **Lembrete de Impressão:** No diálogo da sua impressora (ex.: Epson), configure **Papel Apresentação Premium Fosco**, marque **Sem Ajuste de Cor** (quando o perfil ICC já tiver sido aplicado pelo programa) e ative **Espelhar Imagem**.
 
 ---
 
-## 📦 O Executável (Versão 1.0)
+## 🗂️ Estrutura do Projeto
 
-Para tornar a experiência a mais amigável possível, o OpenMug Studio é distribuído como um **Executável Único** (Standalone) para Windows. Isso significa que você não precisa instalar o Python, nem lidar com códigos se não quiser. É só baixar os arquivos na aba *Releases* e usar!
-
-### Como o executável foi feito?
-Utilizamos a ferramenta poderosa chamada **PyInstaller**. Ela empacota todo o código Python, juntamente com o CustomTkinter, a biblioteca Pillow (para edição de imagem) e os arquivos necessários (como ícones), em um único arquivo `.exe`. 
-
-O comando básico utilizado para gerar a build (configurado no arquivo `.spec` incluso no repositório) foi:
-```bash
-pyinstaller --noconfirm --windowed --icon "OpenMug Studio.ico" main.py
+```text
+OpenMug Studio/
+├── core/
+│   ├── config_manager.py    # Persistência do perfil ICC e pasta temporária
+│   ├── image_processor.py   # Montagem A4 (300 DPI), modos de encaixe e perfil ICC
+│   ├── updater.py           # Verificação, download e auto-atualização via GitHub Releases
+│   └── version.py           # Versão atual, repositório e notas da versão embutidas
+├── gui/
+│   ├── app.py               # Janela principal e modal de notas da versão
+│   ├── background.py        # Papel de parede dinâmico e efeito translúcido (glass)
+│   ├── preview_window.py    # Janela de pré-visualização da folha A4 e exportação PDF
+│   └── theme.py             # Sistema de design (paleta, tipografia e componentes pílula)
+├── ICM/                     # Perfis de cor de referência (.icm)
+├── main.py                  # Ponto de entrada da aplicação
+├── OpenMug Studio.spec      # Configuração de empacotamento do PyInstaller
+└── requirements.txt         # Dependências Python
 ```
-Isso garante que ao abrir o programa não apareça nenhuma tela preta (console) no fundo, entregando uma experiência 100% profissional ao usuário.
 
 ---
 
-## 🛠️ Como rodar a partir do código-fonte (Para Devs)
-
-Se você é um desenvolvedor e quer modificar o OpenMug Studio:
+## 🛠️ Executando e Compilando pelo Código-Fonte (Para Devs)
 
 1. Clone o repositório:
    ```bash
    git clone https://github.com/niellzinhow/OpenMug-Studio.git
+   cd "OpenMug-Studio"
    ```
 2. Instale as dependências:
    ```bash
-   pip install customtkinter Pillow
+   pip install -r requirements.txt
    ```
-3. Execute o programa:
+3. Execute o programa em modo de desenvolvimento:
    ```bash
    python main.py
+   ```
+4. Para gerar o executável único (`dist/OpenMug Studio.exe`) com o PyInstaller:
+   ```powershell
+   python -m pip install pyinstaller
+   python -m PyInstaller "OpenMug Studio.spec" --noconfirm
    ```
 
 ---
 
 <div align="center">
-  <p>Feito com ❤️ e muita criatividade. Aproveite a Versão 1.0!</p>
+  <p>Feito com ❤️ para tornar a sublimação mais prática e precisa — <strong>OpenMug Studio v1.3.1</strong></p>
 </div>

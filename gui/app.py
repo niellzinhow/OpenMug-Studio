@@ -244,7 +244,34 @@ class App(ctk.CTk):
 
     # --- NOTAS DA VERSÃO ---
     def show_release_notes(self):
-        """Abre a janela com as notas da versão atual (buscadas na release do GitHub)."""
+        """Abre instantaneamente as notas da versão atual e sincroniza com o GitHub em segundo plano."""
+        # Evita instâncias duplicadas: se já estiver aberta, apenas traz para a frente
+        existing = getattr(self, "_notes_holder", None)
+        if existing and existing["win"].winfo_exists():
+            w = existing["win"]
+            w.deiconify()
+            w.attributes("-topmost", True)
+            w.lift()
+            w.focus_force()
+            return
+
+        embedded = updater.get_embedded_notes(VERSION)
+        if embedded:
+            # Abre na hora (0ms de espera!) com as notas embutidas e atualiza se o GitHub tiver texto diferente
+            holder = self._open_notes_window(embedded, None)
+            self._notes_holder = holder
+
+            def sync_worker():
+                try:
+                    remote = updater.fetch_release_notes(VERSION)
+                    if remote and remote.strip() != embedded.strip():
+                        self.after(0, lambda: holder["render"](remote))
+                except updater.UpdateError:
+                    pass
+
+            threading.Thread(target=sync_worker, daemon=True).start()
+            return
+
         self.btn_notes.configure(state="disabled")
 
         def worker():
@@ -266,16 +293,23 @@ class App(ctk.CTk):
             body = "Não há notas publicadas para esta versão."
 
         width, height = 560, 500
+        try:
+            scale = ctk.ScalingTracker.get_window_scaling(self) or 1.0
+        except Exception:
+            scale = 1.0
+
         win = ctk.CTkToplevel(self)
         win.withdraw()
         win.overrideredirect(True)  # sem moldura nativa: o contorno é desenhado pelo próprio modal
+        win.attributes("-topmost", True)  # garante que nunca abra atrás da janela principal
         win.configure(fg_color=T.BG_MODAL_KEY)
         try:
             win.attributes("-transparentcolor", T.BG_MODAL_KEY)  # cantos arredondados reais (Windows)
         except tkinter.TclError:
             pass
-        x = self.winfo_rootx() + max(0, (self.winfo_width() - width) // 2)
-        y = self.winfo_rooty() + max(0, (self.winfo_height() - height) // 3)
+        px_w, px_h = round(width * scale), round(height * scale)
+        x = self.winfo_rootx() + max(0, (self.winfo_width() - px_w) // 2)
+        y = self.winfo_rooty() + max(0, (self.winfo_height() - px_h) // 3)
         win.geometry(f"{width}x{height}+{x}+{y}")
 
         shell = ctk.CTkFrame(win, fg_color=T.MODAL_BG, corner_radius=T.RADIUS_MODAL,
@@ -309,22 +343,29 @@ class App(ctk.CTk):
                                       scrollbar_button_hover_color=T.SECONDARY_HOVER)
         card.pack(fill="both", expand=True, padx=22, pady=6)
 
-        ctk.CTkLabel(card, text=f"OpenMug Studio {VERSION}", font=T.font(16, "bold"),
-                     text_color=T.TEXT_TITLE, anchor="w").pack(fill="x", padx=12, pady=(10, 4))
+        def render_body(content):
+            if not win.winfo_exists() or not card.winfo_exists():
+                return
+            for child in card.winfo_children():
+                child.destroy()
+            ctk.CTkLabel(card, text=f"OpenMug Studio {VERSION}", font=T.font(16, "bold"),
+                         text_color=T.TEXT_TITLE, anchor="w").pack(fill="x", padx=12, pady=(10, 4))
 
-        for line in body.split("\n"):
-            stripped = line.strip()
-            if not stripped:
-                ctk.CTkFrame(card, fg_color="transparent", height=4).pack()
-            elif stripped.startswith("•"):
-                ctk.CTkLabel(card, text=stripped, font=T.font(13), text_color=T.TEXT_ON_SECONDARY,
-                             anchor="w", justify="left", wraplength=440).pack(fill="x", padx=(18, 12), pady=2)
-            elif stripped == stripped.upper() and any(c.isalpha() for c in stripped) and len(stripped) < 60:
-                ctk.CTkLabel(card, text=stripped, font=T.font(11, "bold"), text_color=T.MODAL_SECTION,
-                             anchor="w").pack(fill="x", padx=12, pady=(12, 2))
-            else:
-                ctk.CTkLabel(card, text=stripped, font=T.font(13), text_color=T.TEXT_ON_SECONDARY,
-                             anchor="w", justify="left", wraplength=450).pack(fill="x", padx=12, pady=2)
+            for line in content.split("\n"):
+                stripped = line.strip()
+                if not stripped:
+                    ctk.CTkFrame(card, fg_color="transparent", height=4).pack()
+                elif stripped.startswith("•"):
+                    ctk.CTkLabel(card, text=stripped, font=T.font(13), text_color=T.TEXT_ON_SECONDARY,
+                                 anchor="w", justify="left", wraplength=440).pack(fill="x", padx=(18, 12), pady=2)
+                elif stripped == stripped.upper() and any(c.isalpha() for c in stripped) and len(stripped) < 60:
+                    ctk.CTkLabel(card, text=stripped, font=T.font(11, "bold"), text_color=T.MODAL_SECTION,
+                                 anchor="w").pack(fill="x", padx=12, pady=(12, 2))
+                else:
+                    ctk.CTkLabel(card, text=stripped, font=T.font(13), text_color=T.TEXT_ON_SECONDARY,
+                                 anchor="w", justify="left", wraplength=450).pack(fill="x", padx=12, pady=2)
+
+        render_body(body)
 
         # Rodapé: link do repositório
         link = ctk.CTkLabel(shell, text=f"github.com/{GITHUB_REPO}", text_color=T.ACCENT, cursor="hand2",
@@ -334,11 +375,95 @@ class App(ctk.CTk):
         link.bind("<Enter>", lambda e: link.configure(font=T.font(12, underline=True), text_color=T.ACCENT_HOVER))
         link.bind("<Leave>", lambda e: link.configure(font=T.font(12), text_color=T.ACCENT))
 
-        win.bind("<Escape>", lambda e: win.destroy())
-        win.deiconify()
-        win.lift()
-        win.focus_force()
-        win.after(100, lambda: win.winfo_exists() and win.grab_set())
+        # Suporte completo a MouseWheel E Precision Touchpad (<TouchpadScroll> introduzido no Tk 9 / Python 3.14,
+        # que o CustomTkinter não trata nativamente e onde dy vem empacotado em int16 nos 16 bits inferiores).
+        scroll_acc = [0.0]
+
+        active = [True]
+
+        def _scroll_pixels(dy_delta):
+            if not active[0] or not win.winfo_exists() or not card.winfo_exists():
+                return
+            if card._parent_canvas.yview() == (0.0, 1.0):
+                return
+            scroll_acc[0] += -dy_delta * 1.5
+            steps = int(scroll_acc[0])
+            if steps != 0:
+                scroll_acc[0] -= steps
+                card._parent_canvas.yview("scroll", steps, "units")
+
+        def _on_notes_wheel(event):
+            if not active[0] or not win.winfo_exists() or not card.winfo_exists():
+                return
+            # Modal tem apenas este container rolável; se o próprio CTkScrollableFrame ainda não rolou, rola aqui
+            if not card._check_if_valid_scroll(event.widget):
+                if card._parent_canvas.yview() != (0.0, 1.0):
+                    card._parent_canvas.yview("scroll", -int(event.delta / 6), "units")
+
+        def _on_notes_touchpad(event):
+            if not active[0]:
+                return
+            raw_dy = event.delta & 0xFFFF
+            if raw_dy >= 0x8000:
+                raw_dy -= 0x10000
+            if raw_dy != 0:
+                _scroll_pixels(raw_dy)
+
+        win.bind_all("<MouseWheel>", _on_notes_wheel, add="+")
+        try:
+            win.bind_all("<TouchpadScroll>", _on_notes_touchpad, add="+")
+        except tkinter.TclError:
+            pass
+        esc_id = self.bind("<Escape>", lambda e: _close_notes(), add="+")
+
+        def _close_notes():
+            active[0] = False
+            self._notes_holder = None
+            for w, seq, fid in ((self, "<FocusIn>", focus_in_id),
+                                (self, "<FocusOut>", focus_out_id),
+                                (self, "<Unmap>", unmap_id),
+                                (self, "<Escape>", esc_id)):
+                try:
+                    if fid and w.winfo_exists():
+                        w.unbind(seq, fid)
+                except Exception:
+                    pass
+            if win.winfo_exists():
+                win.destroy()
+
+        def _on_app_focus_out(e):
+            if not win.winfo_exists():
+                return
+            self.after(60, lambda: win.winfo_exists() and self.focus_displayof() is None and win.attributes("-topmost", False))
+
+        def _on_app_focus_in(e):
+            if win.winfo_exists():
+                win.deiconify()
+                win.attributes("-topmost", True)
+                win.lift()
+
+        focus_in_id = self.bind("<FocusIn>", _on_app_focus_in, add="+")
+        focus_out_id = self.bind("<FocusOut>", _on_app_focus_out, add="+")
+        unmap_id = self.bind("<Unmap>", lambda e: e.widget is self and win.winfo_exists() and win.withdraw(), add="+")
+
+        btn_close.configure(command=_close_notes)
+        win.bind("<Escape>", lambda e: _close_notes())
+        win.protocol("WM_DELETE_WINDOW", _close_notes)
+
+        def _bring_to_front():
+            if not win.winfo_exists():
+                return
+            win.deiconify()
+            win.attributes("-topmost", True)
+            win.lift()
+            win.focus_force()
+
+        win.update_idletasks()
+        _bring_to_front()
+        # Reforça o z-order após o ciclo interno de inicialização de 200ms do CTkToplevel
+        win.after(60, _bring_to_front)
+        win.after(220, lambda: (_bring_to_front(), win.winfo_exists() and win.grab_set()))
+        return {"win": win, "render": render_body}
 
     # --- ATUALIZAÇÃO (GitHub Releases) ---
     def check_updates(self, silent=True):

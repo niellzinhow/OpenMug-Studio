@@ -8,7 +8,7 @@ import tempfile
 import urllib.error
 import urllib.request
 
-from core.version import VERSION, GITHUB_REPO
+from core.version import VERSION, GITHUB_REPO, RELEASE_NOTES
 
 API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 RELEASES_PAGE = f"https://github.com/{GITHUB_REPO}/releases/latest"
@@ -51,23 +51,63 @@ def markdown_to_text(md):
     return re.sub(r"\n{3,}", "\n\n", text).strip()
 
 
-def fetch_release_notes(version=VERSION, timeout=10):
-    """Busca as notas da release da versão informada. Retorna o texto ou None se não houver release/notas."""
-    for tag in (f"v{version}", version):
-        url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/tags/{tag}"
+def _fetch_json_with_retry(url, timeout=8, retries=2):
+    """Faz GET JSON na API do GitHub com nova tentativa rápida em falhas 5xx ou timeout."""
+    last_err = None
+    for attempt in range(retries):
         try:
             req = urllib.request.Request(url, headers=_HEADERS)
             with urllib.request.urlopen(req, timeout=timeout) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
+                return json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
             if e.code == 404:
-                continue
-            raise UpdateError(f"Não foi possível consultar o GitHub (erro HTTP {e.code}).")
+                return None
+            last_err = e
+            if e.code not in (500, 502, 503, 504) or attempt == retries - 1:
+                raise UpdateError(f"Não foi possível consultar o GitHub (erro HTTP {e.code}).")
         except Exception as e:
-            raise UpdateError(f"Não foi possível consultar o GitHub. Verifique sua conexão com a internet.\n{e}")
-        text = markdown_to_text(data.get("body"))
-        return text or None
-    return None
+            last_err = e
+            if attempt == retries - 1:
+                raise UpdateError(f"Não foi possível consultar o GitHub. Verifique sua conexão com a internet.\n{e}")
+    raise UpdateError(f"Não foi possível consultar o GitHub.\n{last_err}")
+
+
+def get_embedded_notes(version=VERSION):
+    """Retorna imediatamente as notas embutidas da versão atual (ou None)."""
+    return markdown_to_text(RELEASE_NOTES) if version == VERSION and RELEASE_NOTES else None
+
+
+def fetch_release_notes(version=VERSION, timeout=5):
+    """Busca as notas da release da versão informada, com fallback para as notas embutidas no app."""
+    fallback = get_embedded_notes(version)
+
+    # 1. Tenta primeiro por releases/latest (endpoint cacheado pelo GitHub e muito mais estável)
+    try:
+        latest_data = _fetch_json_with_retry(API_URL, timeout=timeout, retries=2)
+        if latest_data and parse_version(latest_data.get("tag_name", "")) == parse_version(version):
+            text = markdown_to_text(latest_data.get("body"))
+            if text:
+                return text
+    except UpdateError:
+        if fallback:
+            return fallback
+        raise
+
+    # 2. Caso a versão instalada não seja a latest, consulta a tag específica
+    for tag in (f"v{version}", version):
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/tags/{tag}"
+        try:
+            data = _fetch_json_with_retry(url, timeout=timeout, retries=2)
+        except UpdateError:
+            if fallback:
+                return fallback
+            raise
+        if data:
+            text = markdown_to_text(data.get("body"))
+            if text:
+                return text
+
+    return fallback
 
 
 def is_frozen():
@@ -77,17 +117,9 @@ def is_frozen():
 
 def check_for_update(timeout=10):
     """Consulta a última release. Retorna um dict com os dados se houver versão nova, senão None."""
-    try:
-        req = urllib.request.Request(API_URL, headers=_HEADERS)
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            # Repositório sem nenhuma release publicada: não há atualização disponível
-            return None
-        raise UpdateError(f"Não foi possível consultar o GitHub (erro HTTP {e.code}).")
-    except Exception as e:
-        raise UpdateError(f"Não foi possível consultar o GitHub. Verifique sua conexão com a internet.\n{e}")
+    data = _fetch_json_with_retry(API_URL, timeout=timeout, retries=2)
+    if not data:
+        return None
 
     latest = parse_version(data.get("tag_name", ""))
     current = parse_version(VERSION)

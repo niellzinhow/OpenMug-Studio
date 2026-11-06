@@ -32,10 +32,14 @@ class PreviewWindow(ctk.CTkToplevel):
         # Maximizando a Janela e forçando ancoragem em 0,0 para evitar bugs do Windows
         if os.name == 'nt':
             self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}+0+0")
-            self.after(200, lambda: self.state('zoomed'))
+            self.after(200, lambda: self._ensure_front(maximize=True))
         else:
             self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}+0+0")
+            self.after(200, lambda: self._ensure_front(maximize=False))
             
+        self.transient(master)
+        self.lift()
+        self.focus_force()
         self.grab_set() 
 
         # Define Fundo da janela (CMYK Midnight)
@@ -45,6 +49,17 @@ class PreviewWindow(ctk.CTkToplevel):
         self.wallpaper = Wallpaper(self)
 
         self._build_ui()
+
+    def _ensure_front(self, maximize=False):
+        if not self.winfo_exists():
+            return
+        if maximize:
+            self.state('zoomed')
+        self.deiconify()
+        self.attributes("-topmost", True)
+        self.lift()
+        self.focus_force()
+        self.after(120, lambda: self.winfo_exists() and self.attributes("-topmost", False))
 
     def _build_ui(self):
         # --- Barra inferior flutuante (cápsula) ---
