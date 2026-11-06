@@ -1,10 +1,14 @@
 import os
 import sys
+import threading
+import webbrowser
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from PIL import Image
 
 from core.config_manager import ConfigManager
+from core import updater
+from core.version import VERSION
 from core.image_processor import ImageProcessor
 from gui.preview_window import PreviewWindow
 
@@ -76,6 +80,9 @@ class App(ctk.CTk):
         # Iniciar maximizado no Windows
         if os.name == 'nt':
             self.after(0, lambda: self.state('zoomed'))
+
+        # Verificação silenciosa de atualização ao abrir
+        self.after(1500, lambda: self.check_updates(silent=True))
 
     def _build_ui(self):
         """Constrói a interface gráfica do aplicativo com Card Design (Midnight CMYK)."""
@@ -192,6 +199,93 @@ class App(ctk.CTk):
                                            fg_color="#333333", hover_color="#555555", state="disabled", text_color="#F8FAFC",
                                            font=ctk.CTkFont(size=14, weight="bold"))
         self.btn_clear_all.pack(side="left", padx=10)
+
+        # Versão e atualização (canto superior direito)
+        update_frame = ctk.CTkFrame(self, fg_color="transparent")
+        update_frame.place(relx=1.0, x=-20, y=15, anchor="ne")
+
+        self.lbl_version = ctk.CTkLabel(update_frame, text=f"Versão {VERSION}", text_color="#94A3B8")
+        self.lbl_version.pack(side="left", padx=(0, 10))
+
+        self.btn_update = ctk.CTkButton(update_frame, text="Buscar atualizações", width=150, height=28,
+                                        fg_color="transparent", border_width=1, border_color="#475569",
+                                        text_color="#94A3B8", hover_color="#334155",
+                                        command=lambda: self.check_updates(silent=False))
+        self.btn_update.pack(side="left")
+
+    # --- ATUALIZAÇÃO (GitHub Releases) ---
+    def check_updates(self, silent=True):
+        """Consulta a última release em segundo plano. Se silent=True, só avisa quando houver versão nova."""
+        self.btn_update.configure(state="disabled", text="Verificando...")
+
+        def worker():
+            try:
+                info, error = updater.check_for_update(), None
+            except updater.UpdateError as e:
+                info, error = None, str(e)
+            self.after(0, lambda: self._on_update_checked(info, error, silent))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_update_checked(self, info, error, silent):
+        self.btn_update.configure(state="normal", text="Buscar atualizações")
+        if error:
+            if not silent:
+                messagebox.showerror("Atualização", error)
+            return
+        if not info:
+            if not silent:
+                messagebox.showinfo("Atualização", f"Você já está na versão mais recente ({VERSION}).")
+            return
+
+        notes = info["notes"].strip()
+        msg = f"Nova versão disponível: {info['version']} (atual: {VERSION}).\n"
+        if notes:
+            msg += f"\n{notes[:600]}\n"
+        if not updater.is_frozen() or not info["url"]:
+            msg += "\nAbrir a página de download?"
+            if messagebox.askyesno("Atualização disponível", msg):
+                webbrowser.open(updater.RELEASES_PAGE)
+            return
+        msg += "\nDeseja baixar e instalar agora? O programa será reiniciado."
+        if messagebox.askyesno("Atualização disponível", msg):
+            self._start_download(info)
+
+    def _start_download(self, info):
+        win = ctk.CTkToplevel(self)
+        win.title("Atualizando")
+        win.geometry("360x110")
+        win.resizable(False, False)
+        win.configure(fg_color="#0F172A")
+        win.transient(self)
+        win.grab_set()
+        win.protocol("WM_DELETE_WINDOW", lambda: None)
+        ctk.CTkLabel(win, text=f"Baixando versão {info['version']}...", text_color="#F8FAFC").pack(pady=(20, 10))
+        bar = ctk.CTkProgressBar(win, width=300, progress_color="#06B6D4")
+        bar.set(0)
+        bar.pack()
+
+        def worker():
+            try:
+                path = updater.download_update(info, lambda p: self.after(0, lambda: bar.set(p)))
+                self.after(0, lambda: self._finish_update(win, path, None))
+            except updater.UpdateError as e:
+                self.after(0, lambda: self._finish_update(win, None, str(e)))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _finish_update(self, win, path, error):
+        win.destroy()
+        if error:
+            messagebox.showerror("Atualização", error)
+            return
+        try:
+            updater.apply_update(path)
+        except Exception as e:
+            messagebox.showerror("Atualização", f"Não foi possível aplicar a atualização:\n{e}")
+            return
+        self.destroy()
+        sys.exit(0)
 
     def select_icc(self):
         filepath = filedialog.askopenfilename(
