@@ -469,6 +469,14 @@
    'C:\\Users\\danie\\OneDrive\\Documentos\\GitHub\\OpenMug '
    'Studio\\core\\image_processor.py',
    'PYMODULE'),
+  ('core.updater',
+   'C:\\Users\\danie\\OneDrive\\Documentos\\GitHub\\OpenMug '
+   'Studio\\core\\updater.py',
+   'PYMODULE'),
+  ('core.version',
+   'C:\\Users\\danie\\OneDrive\\Documentos\\GitHub\\OpenMug '
+   'Studio\\core\\version.py',
+   'PYMODULE'),
   ('csv', 'C:\\Program Files\\Python314\\Lib\\csv.py', 'PYMODULE'),
   ('ctypes',
    'C:\\Program Files\\Python314\\Lib\\ctypes\\__init__.py',
