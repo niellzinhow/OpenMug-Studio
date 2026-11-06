@@ -5,9 +5,10 @@ Histórico (reconstruído a partir dos commits que alteraram o executável):
     1.0.1  - 8758ab3  Executável atualizado com a correção de erro
     1.1.0  - d88c869  Código modularizado, otimizações e prévia ajustada (executável atual no repositório)
     1.2.0  - Modo "Centralizar" (padrão), seletor aprimorado e atualização via GitHub Releases
-    1.2.1  - (atual)  Versão de teste do atualizador
+    1.2.1  - Versão de teste do atualizador
+    1.3.0  - (atual)  Novo design Dark Glassmorphism, modal de notas da versão e seletor pílula
 """
 
-VERSION = "1.2.1"
+VERSION = "1.3.0"
 GITHUB_REPO = "niellzinhow/OpenMug-Studio"
 
