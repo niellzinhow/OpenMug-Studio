@@ -34,6 +34,20 @@ class ImageProcessor:
                         # Corta pelo centro preservando a proporção
                         processed_img = ImageOps.fit(img, (self.mug_width, self.mug_height), 
                                                      method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
+                    elif mode == "Centralizar":
+                        # Ajusta à altura correta mantendo a proporção original
+                        new_width = max(1, round(img.width * self.mug_height / img.height))
+                        processed_img = img.resize((new_width, self.mug_height), Image.Resampling.LANCZOS)
+                        
+                        # Se ficar mais larga que a folha, corta o excesso pelo centro
+                        if new_width > self.a4_width:
+                            left = (new_width - self.a4_width) // 2
+                            processed_img = processed_img.crop((left, 0, left + self.a4_width, self.mug_height))
+                            new_width = self.a4_width
+                        
+                        # Centraliza horizontalmente na folha
+                        a4_image.paste(processed_img, ((self.a4_width - new_width) // 2, y_offsets[i]))
+                        continue
                     else:
                         # Estica para forçar o tamanho exato
                         processed_img = img.resize((self.mug_width, self.mug_height), Image.Resampling.LANCZOS)

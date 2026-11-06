@@ -26,7 +26,7 @@ Ele permite organizar facilmente até **3 artes** para canecas padrão (325 ml) 
 
 - 🎛️ **Aplicação de Perfil ICC:** Suporte completo para carregar perfis `.icc` ou `.icm` para cores 100% precisas na sua impressora sublimática.
 - 📐 **Montagem Automática em A4:** Encaixa de 1 a 3 artes (tamanho padrão de canecas de 325 ml) em uma única folha A4 em alta resolução (300 DPI).
-- 🖼️ **Modos de Encaixe:** Escolha entre *Cortar* (mantém a proporção centralizando a arte) ou *Redimensionar* (estica para cobrir a área exata).
+- 🖼️ **Modos de Encaixe:** Escolha entre *Centralizar* (padrão: ajusta à altura mantendo a proporção original e centraliza na folha), *Cortar* (mantém a proporção cortando pelo centro) ou *Redimensionar* (estica para cobrir a área exata).
 - 👁️‍🗨️ **Visualização (Preview) Realista:** Veja como sua folha A4 ficará antes de imprimir.
 - 💾 **Geração de PDF:** O programa sempre exportará o seu trabalho como um arquivo PDF pronto para a impressão (a impressão direta na impressora ainda não está disponível pelo programa).
 - 🚀 **Pronto para uso:** Não requer instalação, basta baixar o executável (versão Standalone).
@@ -43,7 +43,7 @@ O uso do OpenMug Studio é focado em praticidade. Siga os passos abaixo:
    - Nos blocos de "Arte 1", "Arte 2" e "Arte 3", clique em `Escolher Imagem`.
    - Selecione as imagens da sua caneca (PNG, JPG, etc).
    - *Dica:* Você pode duplicar uma arte rapidamente clicando no botão `⧉ Duplicar`!
-4. **Ajuste o Modo de Encaixe:** Para cada arte, selecione se deseja *Cortar* ou *Redimensionar*.
+4. **Ajuste o Modo de Encaixe:** Para cada arte, selecione se deseja *Centralizar* (padrão), *Cortar* ou *Redimensionar*.
 5. **Gere a Prévia:** Clique no botão azul gigante na parte inferior: `Gerar Prévia`.
 6. **Imprima ou Salve:** Na tela de visualização, você pode clicar em `Salvar PDF` para guardar o arquivo, ou em `Gerar PDF` para abrir automaticamente o PDF gerado no seu leitor padrão, de onde você fará a impressão. *(Nota: A impressão não é feita diretamente pelo programa, ele gera o PDF para garantir a qualidade final).*
 

@@ -15,6 +15,39 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
+class ClickableComboBox(ctk.CTkComboBox):
+    """ComboBox somente leitura, com borda contínua na área da seta e clicável em toda a caixa."""
+
+    def _create_bindings(self, sequence=None):
+        super()._create_bindings(sequence)
+        if sequence is None:
+            for tag in ("inner_parts_left", "border_parts_left"):
+                self._canvas.tag_bind(tag, "<Enter>", self._on_enter)
+                self._canvas.tag_bind(tag, "<Leave>", self._on_leave)
+                self._canvas.tag_bind(tag, "<Button-1>", self._clicked)
+            self._entry.bind("<Enter>", self._on_enter)
+            self._entry.bind("<Leave>", self._on_leave)
+            self._entry.bind("<Button-1>", self._clicked)
+
+    def _restore_border(self):
+        color = self._apply_appearance_mode(self._border_color)
+        self._canvas.itemconfig("border_parts_right", outline=color, fill=color)
+
+    def _draw(self, no_color_updates=False):
+        super()._draw(no_color_updates)
+        self._restore_border()
+
+    def _on_enter(self, event=0):
+        super()._on_enter(event)
+        self._restore_border()
+        self._entry.configure(cursor="hand2")
+
+    def _on_leave(self, event=0):
+        super()._on_leave(event)
+        self._restore_border()
+        self._entry.configure(cursor="arrow")
+
+
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -33,9 +66,9 @@ class App(ctk.CTk):
         
         # Armazena os dados das 3 imagens
         self.images_data = [
-            {"path": "", "mode": "Redimensionar", "label_ref": None, "thumb_ref": None, "actions_frame_ref": None, "combo_mode_ref": None},
-            {"path": "", "mode": "Redimensionar", "label_ref": None, "thumb_ref": None, "actions_frame_ref": None, "combo_mode_ref": None},
-            {"path": "", "mode": "Redimensionar", "label_ref": None, "thumb_ref": None, "actions_frame_ref": None, "combo_mode_ref": None}
+            {"path": "", "mode": "Centralizar", "label_ref": None, "thumb_ref": None, "actions_frame_ref": None, "combo_mode_ref": None},
+            {"path": "", "mode": "Centralizar", "label_ref": None, "thumb_ref": None, "actions_frame_ref": None, "combo_mode_ref": None},
+            {"path": "", "mode": "Centralizar", "label_ref": None, "thumb_ref": None, "actions_frame_ref": None, "combo_mode_ref": None}
         ]
 
         self._build_ui()
@@ -115,9 +148,11 @@ class App(ctk.CTk):
             lbl_mode = ctk.CTkLabel(right_frame, text="Modo de Encaixe:", text_color="#94A3B8")
             lbl_mode.pack(anchor="e", pady=(0, 2))
 
-            combo_mode = ctk.CTkComboBox(right_frame, values=["Cortar", "Redimensionar"], 
+            combo_mode = ClickableComboBox(right_frame, values=["Centralizar", "Cortar", "Redimensionar"], state="readonly",
                                          command=lambda val, idx=i: self.set_image_mode(val, idx),
-                                         fg_color="#334155", border_color="#475569", button_color="#334155", text_color="#F8FAFC")
+                                         fg_color="#334155", border_color="#475569", button_color="#334155", button_hover_color="#334155",
+                                         dropdown_fg_color="#334155", dropdown_hover_color="#475569",
+                                         dropdown_text_color="#F8FAFC", text_color="#F8FAFC")
             combo_mode.set(self.images_data[i]["mode"])
             combo_mode.pack(anchor="e", pady=(0, 10))
 
@@ -183,10 +218,10 @@ class App(ctk.CTk):
             filename = os.path.basename(filepath)
             self.images_data[index]["label_ref"].configure(text=filename)
             
-            # Força o reset para "Redimensionar" ao escolher/substituir a imagem
-            self.images_data[index]["mode"] = "Redimensionar"
+            # Força o reset para "Centralizar" ao escolher/substituir a imagem
+            self.images_data[index]["mode"] = "Centralizar"
             if self.images_data[index]["combo_mode_ref"]:
-                self.images_data[index]["combo_mode_ref"].set("Redimensionar")
+                self.images_data[index]["combo_mode_ref"].set("Centralizar")
 
             # Gera a miniatura (Thumbnail)
             try:
@@ -211,10 +246,10 @@ class App(ctk.CTk):
         self.images_data[index]["thumb_ref"].configure(image="", text="Sem Imagem")
         self.images_data[index]["actions_frame_ref"].pack_forget()
         
-        # Reseta o modo para "Redimensionar" ao limpar
-        self.images_data[index]["mode"] = "Redimensionar"
+        # Reseta o modo para "Centralizar" ao limpar
+        self.images_data[index]["mode"] = "Centralizar"
         if self.images_data[index]["combo_mode_ref"]:
-            self.images_data[index]["combo_mode_ref"].set("Redimensionar")
+            self.images_data[index]["combo_mode_ref"].set("Centralizar")
             
         self.update_clear_all_state()
 
