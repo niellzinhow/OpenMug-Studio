@@ -8,7 +8,7 @@ from PIL import Image
 
 from core.config_manager import ConfigManager
 from core import updater
-from core.version import VERSION
+from core.version import VERSION, GITHUB_REPO
 from core.image_processor import ImageProcessor
 from gui.preview_window import PreviewWindow
 
@@ -212,6 +212,59 @@ class App(ctk.CTk):
                                         text_color="#94A3B8", hover_color="#334155",
                                         command=lambda: self.check_updates(silent=False))
         self.btn_update.pack(side="left")
+
+        self.btn_notes = ctk.CTkButton(update_frame, text="📄", width=28, height=28,
+                                       fg_color="transparent", border_width=1, border_color="#475569",
+                                       text_color="#94A3B8", hover_color="#334155",
+                                       command=self.show_release_notes)
+        self.btn_notes.pack(side="left", padx=(6, 0))
+
+    # --- NOTAS DA VERSÃO ---
+    def show_release_notes(self):
+        """Abre a janela com as notas da versão atual (buscadas na release do GitHub)."""
+        self.btn_notes.configure(state="disabled")
+
+        def worker():
+            try:
+                text, error = updater.fetch_release_notes(VERSION), None
+            except updater.UpdateError as e:
+                text, error = None, str(e)
+            self.after(0, lambda: self._open_notes_window(text, error))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _open_notes_window(self, text, error):
+        self.btn_notes.configure(state="normal")
+        if error:
+            body = error
+        elif text:
+            body = text
+        else:
+            body = "Não há notas publicadas para esta versão."
+
+        win = ctk.CTkToplevel(self)
+        win.title(f"Notas da versão {VERSION}")
+        win.geometry("520x420")
+        win.configure(fg_color="#0F172A")
+        win.transient(self)
+        try:
+            win.after(200, lambda: win.iconbitmap(resource_path("OpenMug Studio.ico")))
+        except Exception:
+            pass
+
+        ctk.CTkLabel(win, text=f"OpenMug Studio {VERSION}", font=ctk.CTkFont(size=18, weight="bold"),
+                     text_color="#F8FAFC").pack(anchor="w", padx=20, pady=(15, 5))
+
+        box = ctk.CTkTextbox(win, fg_color="#1E293B", text_color="#F8FAFC", wrap="word",
+                             font=ctk.CTkFont(size=14))
+        box.pack(fill="both", expand=True, padx=20, pady=5)
+        box.insert("1.0", body)
+        box.configure(state="disabled")
+
+        link = ctk.CTkLabel(win, text=f"github.com/{GITHUB_REPO}", text_color="#06B6D4", cursor="hand2",
+                            font=ctk.CTkFont(size=13, underline=True))
+        link.pack(pady=(5, 15))
+        link.bind("<Button-1>", lambda e: webbrowser.open(f"https://github.com/{GITHUB_REPO}"))
 
     # --- ATUALIZAÇÃO (GitHub Releases) ---
     def check_updates(self, silent=True):

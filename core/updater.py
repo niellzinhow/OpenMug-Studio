@@ -27,6 +27,49 @@ def parse_version(text):
     return tuple(int(p) for p in match.group(1).split("."))
 
 
+def markdown_to_text(md):
+    """Converte o Markdown das release notes em texto simples legível (para caixas de diálogo)."""
+    lines = []
+    for raw in (md or "").replace("\r\n", "\n").split("\n"):
+        line = raw.rstrip()
+        # Títulos: '## Novidades' -> 'NOVIDADES'
+        heading = re.match(r"^\s{0,3}#{1,6}\s+(.*?)\s*#*\s*$", line)
+        if heading:
+            if lines and lines[-1] != "":
+                lines.append("")
+            lines.append(heading.group(1).upper())
+            continue
+        # Listas: '- item' / '* item' -> '• item'
+        line = re.sub(r"^(\s*)[-*+]\s+", lambda m: m.group(1) + "• ", line)
+        # Links, imagens e formatação inline
+        line = re.sub(r"!?\[([^\]]*)\]\([^)]*\)", r"\1", line)
+        line = re.sub(r"(\*\*|__)(.+?)\1", r"\2", line)
+        line = re.sub(r"(?<![\w*])[*_](?!\s)(.+?)(?<!\s)[*_](?![\w*])", r"\1", line)
+        line = re.sub(r"`([^`]*)`", r"\1", line)
+        lines.append(line)
+    text = "\n".join(lines)
+    return re.sub(r"\n{3,}", "\n\n", text).strip()
+
+
+def fetch_release_notes(version=VERSION, timeout=10):
+    """Busca as notas da release da versão informada. Retorna o texto ou None se não houver release/notas."""
+    for tag in (f"v{version}", version):
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/tags/{tag}"
+        try:
+            req = urllib.request.Request(url, headers=_HEADERS)
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                continue
+            raise UpdateError(f"Não foi possível consultar o GitHub (erro HTTP {e.code}).")
+        except Exception as e:
+            raise UpdateError(f"Não foi possível consultar o GitHub. Verifique sua conexão com a internet.\n{e}")
+        text = markdown_to_text(data.get("body"))
+        return text or None
+    return None
+
+
 def is_frozen():
     """True quando rodando como executável (PyInstaller)."""
     return bool(getattr(sys, "frozen", False))
@@ -54,7 +97,7 @@ def check_for_update(timeout=10):
     asset = next((a for a in data.get("assets", []) if a.get("name", "").lower().endswith(".exe")), None)
     return {
         "version": data["tag_name"].lstrip("vV"),
-        "notes": data.get("body") or "",
+        "notes": markdown_to_text(data.get("body")),
         "url": asset["browser_download_url"] if asset else None,
         "size": asset.get("size") if asset else None,
         "digest": asset.get("digest") if asset else None,
